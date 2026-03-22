@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
 
 // ================================================================
-//  Chat Exporter v2.1 — 聊天记录导出器
+//  Chat Exporter v2.1 — 聊天记录导出器 (江窈定制版)
 // ================================================================
 
 /* ===================== 状态 ===================== */
@@ -58,47 +58,56 @@ function hexToRgb(hex) {
     };
 }
 
-// 彻底修复的标签过滤，暴力匹配所有换行、段落打断和转义变体
+// 终极标签过滤：先用DOM解析删除标签元素，再用正则兜底清理转义残留
 function processContent(content, tagsInput, filterMode) {
     if (!tagsInput || !filterMode || filterMode === '0') return content;
     const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
     if (!tags.length) return content;
 
-    let result = content;
+    // 第一步：先用正则清理 <tag>...</tag> 转义形式（贪婪匹配，跨任意行）
+    let cleaned = content;
+    tags.forEach(tag => {
+        // 转义形式 <thinking> ... </thinking>（贪婪，吃掉中间所有内容）
+        const reEsc = new RegExp('<\\s*' + tag + '(?:\\s[^&]*?)?>[\\s\\S]*?<\\s*/\\s*' + tag + '\\s*>', 'gi');
+        cleaned = cleaned.replace(reEsc, '');
+    });
+
+    // 第二步：创建一个临时 DOM 容器来处理原生 HTML 标签
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = cleaned;
+
     if (filterMode === '1') {
+        // 去除模式：删除所有匹配的标签元素
         tags.forEach(tag => {
-            // 兼容原生HTML、转义符，以及被酒馆Markdown打断的标签结构
-            const re1 = new RegExp('<' + tag + '\\b[^>]*>[\\s\\S]*?<\\/' + tag + '>', 'gi');
-            const re2 = new RegExp('<' + tag + '\\b[^&]*>[\\s\\S]*?<\\/' + tag + '>', 'gi');
-            // 兼容某些极端情况：标签内部被强制插入了 <p> 等元素
-            const re3 = new RegExp('<' + tag + '\\b[\\s\\S]*?<\\/' + tag + '>', 'gi');
-            result = result.replace(re1, '').replace(re2, '').replace(re3, '');
+            const elements = tempDiv.querySelectorAll(tag);
+            elements.forEach(el => el.remove());
         });
-        return result;
+        return tempDiv.innerHTML;
     }
+
     if (filterMode === '2') {
+        // 仅保留模式：只提取匹配标签内部的内容
         const kept = [];
         tags.forEach(tag => {
-            const re1 = new RegExp('<' + tag + '\\b[^>]*>([\\s\\S]*?)<\\/' + tag + '>', 'gi');
-            const re2 = new RegExp('<' + tag + '\\b[^&]*>([\\s\\S]*?)<\\/' + tag + '>', 'gi');
-            let m;
-            while ((m = re1.exec(content)) !== null) kept.push(m[1]);
-            while ((m = re2.exec(content)) !== null) kept.push(m[1]);
+            const elements = tempDiv.querySelectorAll(tag);
+            elements.forEach(el => {
+                if (el.innerHTML.trim()) kept.push(el.innerHTML);
+            });
         });
-        return kept.join('\n\n');
+        // 如果DOM里没找到，尝试从转义形式中提取
+        if (!kept.length) {
+            tags.forEach(tag => {
+                const reEsc = new RegExp('<\\s*' + tag + '(?:\\s[^&]*?)?>([\\s\\S]*?)<\\s*/\\s*' + tag + '\\s*>', 'gi');
+                let m;
+                while ((m = reEsc.exec(content)) !== null) {
+                    if (m[1].trim()) kept.push(m[1]);
+                }
+            });
+        }
+        return kept.length ? kept.join('\n\n') : '';
     }
-    return result;
-}
 
-function extractMessageData(mes) {
-    let name = mes.getAttribute('ch_name') || '';
-    if (!name) {
-        const n = mes.querySelector('.ch_name, .name_text');
-        name = n ? n.textContent : '未知';
-    }
-    const textEl = mes.querySelector('.mes_text');
-    if (!textEl) return null;
-    return { name: name.trim(), text: textEl.innerText || '', html: textEl.innerHTML || '' };
+    return tempDiv.innerHTML;
 }
 
 /* ===================== 样式注入 ===================== */
@@ -119,21 +128,18 @@ function injectStyles() {
 }
 #ce-overlay.open { opacity:1; pointer-events:auto; }
 
-/* ===== 面板 (更通透的毛玻璃效果) ===== */
+/* ===== 面板 (毛玻璃效果) ===== */
 #ce-panel {
     position: fixed; top:50%; left:50%;
     transform: translate(-50%,-50%) scale(0.92);
     width: 440px; max-width:94vw; max-height:88vh;
-    /* 大幅降低黑色底色，提高透明度 */
-    background: rgba(45, 48, 55, 0.15);
-    /* 增强模糊效果，确保背景花哨时文字依然清晰 */
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(30, 32, 38, 0.55);
+    backdrop-filter: blur(22px) saturate(1.2);
+    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
     z-index: 2147483641; display:flex; flex-direction:column;
-    /* 减轻阴影的沉重感 */
-    overflow:hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.2);
+    overflow:hidden; box-shadow: 0 12px 36px rgba(0,0,0,0.3);
     font-family: -apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
     color: #f0f0f0; font-size:13px;
     opacity:0; pointer-events:none;
@@ -147,8 +153,7 @@ function injectStyles() {
 /* 头部 */
 .ce-header {
     display:flex; justify-content:space-between; align-items:center;
-    /* 改为微白底色，去掉沉重的黑色 */
-    padding:16px 20px; background: rgba(255, 255, 255, 0.05);
+    padding:16px 20px; background: rgba(0, 0, 0, 0.12);
     border-bottom:1px solid rgba(255,255,255,0.08);
     font-size:15px; font-weight:600; flex-shrink:0;
 }
