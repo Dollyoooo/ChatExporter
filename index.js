@@ -1,13 +1,14 @@
 import { getContext } from '../../../extensions.js';
 
 // ================================================================
-//  Chat Exporter v2.7 — 聊天记录导出器
+//  Chat Exporter v2.8 — 聊天记录导出器
 // ================================================================
 
 const state = {
     selectedMesIds: new Set(),
     style: 'default',
     format: 'img',
+    exportLayout: 'pc',
     bgColor: '#ffffff',
     textColor: '#000000',
     colorTarget: 'bg',
@@ -209,8 +210,10 @@ function injectStyles() {
 #ce-confirm-select-btn.theme-light { background:#000000 !important; color:#ffffff !important; border:1px solid #000000 !important; }
 #ce-confirm-select-btn.theme-dark { background:#ffffff !important; color:#000000 !important; border:1px solid #ffffff !important; }
 
-#ce-render-container { position:absolute; top:-99999px; left:-99999px; width:800px; }
+/* ===== 渲染容器基础 ===== */
+#ce-render-container { position:absolute; top:-99999px; left:-99999px; }
 
+/* ===== 电脑版排版 (默认 800px) ===== */
 .ce-export-default { padding:28px; line-height:1.9; font-size:15px; font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; }
 .ce-export-default .ce-msg { margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid rgba(128,128,128,.3); }
 .ce-export-default .ce-msg:last-child { border-bottom:none; margin-bottom:0; }
@@ -230,6 +233,14 @@ function injectStyles() {
 .ce-export-warm-note .ce-msg { padding-left:16px; margin-bottom:18px; border-left:3px solid #c9a96e; }
 .ce-export-warm-note .ce-msg:last-child { margin-bottom:0; }
 .ce-export-warm-note .ce-msg-name { font-weight:bold; color:#8b6c2a; margin-bottom:6px; font-size:13px; }
+
+/* ===== 手机版排版优化 (覆盖基础样式) ===== */
+.ce-layout-mobile { font-size:16px !important; }
+.ce-layout-mobile.ce-export-default { padding:20px; }
+.ce-layout-mobile.ce-export-white-card { padding:16px; }
+.ce-layout-mobile.ce-export-dark-minimal { padding:20px; }
+.ce-layout-mobile.ce-export-warm-note { padding:24px 20px; }
+.ce-layout-mobile .ce-msg-name { font-size:15px !important; }
 
 #ce-ext-menu-item { cursor:pointer; }
 #ce-ext-menu-item:hover { background:rgba(128,128,128,.1); }
@@ -288,10 +299,14 @@ function createPanel() {
                 </div>
             </div>
             <div class="ce-section">
-                <div class="ce-section-title">导出格式</div>
-                <div class="ce-radio-group">
+                <div class="ce-section-title">导出格式与排版</div>
+                <div class="ce-radio-group" style="margin-bottom:12px;">
                     <label><input type="radio" name="ce-format" value="txt"> TXT 文本</label>
                     <label><input type="radio" name="ce-format" value="img" checked> PNG 图片</label>
+                </div>
+                <div class="ce-radio-group" id="ce-layout-group">
+                    <label><input type="radio" name="ce-layout" value="pc" checked> 电脑版 (宽屏)</label>
+                    <label><input type="radio" name="ce-layout" value="mobile"> 手机版 (窄屏阅读)</label>
                 </div>
             </div>
             <div class="ce-section" id="ce-style-section">
@@ -421,8 +436,16 @@ function setupPanelEvents() {
     document.querySelectorAll('input[name="ce-format"]').forEach(r => {
         r.addEventListener('change', function () {
             state.format = this.value;
-            document.getElementById('ce-style-section').style.display = this.value === 'img' ? '' : 'none';
+            const showImgOptions = this.value === 'img';
+            document.getElementById('ce-style-section').style.display = showImgOptions ? '' : 'none';
+            document.getElementById('ce-layout-group').style.display = showImgOptions ? 'flex' : 'none';
             updateColorSectionVisibility();
+        });
+    });
+
+    document.querySelectorAll('input[name="ce-layout"]').forEach(r => {
+        r.addEventListener('change', function () {
+            state.exportLayout = this.value;
         });
     });
 
@@ -806,19 +829,26 @@ async function exportToImage(messages) {
     const container = document.createElement('div');
     container.id = 'ce-render-container';
 
+    // 动态应用宽度设置
+    container.style.width = state.exportLayout === 'mobile' ? '450px' : '800px';
+
+    let baseClass = '';
     switch (state.style) {
-        case 'white-card':
-            container.className = 'ce-export-white-card'; break;
-        case 'dark-minimal':
-            container.className = 'ce-export-dark-minimal'; break;
-        case 'warm-note':
-            container.className = 'ce-export-warm-note'; break;
+        case 'white-card': baseClass = 'ce-export-white-card'; break;
+        case 'dark-minimal': baseClass = 'ce-export-dark-minimal'; break;
+        case 'warm-note': baseClass = 'ce-export-warm-note'; break;
         default:
-            container.className = 'ce-export-default';
+            baseClass = 'ce-export-default';
             container.style.backgroundColor = state.bgColor;
             container.style.color = state.textColor;
             break;
     }
+
+    // 如果是手机版排版，追加修饰类名
+    if (state.exportLayout === 'mobile') {
+        baseClass += ' ce-layout-mobile';
+    }
+    container.className = baseClass;
 
     messages.forEach(msg => {
         const div = document.createElement('div');
@@ -869,9 +899,9 @@ function createMenuButton() {
 /* ===================== 初始化 ===================== */
 
 jQuery(async function () {
-    console.log('[ChatExporter] v2.7 开始加载...');
+    console.log('[ChatExporter] v2.8 开始加载...');
     injectStyles();
     createPanel();
     createMenuButton();
-    console.log('[ChatExporter] v2.7 加载完成');
+    console.log('[ChatExporter] v2.8 加载完成');
 });
