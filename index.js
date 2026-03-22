@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
 
 // ================================================================
-//  Chat Exporter v2.6 — 聊天记录导出器
+//  Chat Exporter v2.7 — 聊天记录导出器
 // ================================================================
 
 const state = {
@@ -72,22 +72,21 @@ function injectStyles() {
 }
 #ce-overlay.open { opacity:1; pointer-events:auto; }
 
-/* ===== 面板基础 (纯色不透明，全端居中留空) ===== */
+/* ===== 面板基础 (修复手机端被顶出屏幕外的问题) ===== */
 #ce-panel {
-    position:fixed; top:50%; left:50%;
-    transform:translate(-50%, -50%) scale(0.95);
-    width:440px; max-width:90vw; height:auto; max-height:85vh;
+    position:fixed; top:5vh; left:50%;
+    transform:translateX(-50%);
+    width:440px; max-width:92vw; height:auto; max-height:90vh;
     border-radius:12px;
     z-index:2147483641; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
     font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
     font-size:13px;
     opacity:0; pointer-events:none;
-    transition:opacity .2s ease, transform .2s ease;
+    transition:opacity .2s ease;
 }
 #ce-panel.open {
     opacity:1; pointer-events:auto;
-    transform:translate(-50%, -50%) scale(1);
 }
 
 /* ===== 手机/平板适配 ===== */
@@ -198,15 +197,14 @@ function injectStyles() {
 .ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
 .ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
-/* ===== 完成选择按钮 (修复层级与位置) ===== */
+/* ===== 完成选择按钮 (绝对保证可见) ===== */
 #ce-confirm-select-btn {
     position:fixed !important; bottom:40px !important; left:50% !important;
     transform:translateX(-50%) !important;
     padding:16px 40px !important; border-radius:30px !important;
     font-size:16px !important; font-weight:bold !important; cursor:pointer !important;
-    z-index:2147483647 !important; /* 保证最高层级 */
+    z-index:2147483647 !important; /* 最高层级 */
     box-shadow:0 8px 24px rgba(0,0,0,0.5) !important;
-    transition:transform .2s ease !important;
 }
 #ce-confirm-select-btn.theme-light { background:#000000 !important; color:#ffffff !important; border:1px solid #000000 !important; }
 #ce-confirm-select-btn.theme-dark { background:#ffffff !important; color:#000000 !important; border:1px solid #ffffff !important; }
@@ -665,7 +663,6 @@ function collectMessages() {
     const filterMode = document.querySelector('input[name="ce-filter"]:checked').value;
     const raw = [];
 
-    // 直接获取酒馆底层的聊天记录数组，绕开浏览器DOM解析
     const context = typeof getContext === 'function' ? getContext() : null;
     const chatArray = context ? context.chat : [];
 
@@ -679,7 +676,6 @@ function collectMessages() {
         let rawText = "";
         let hasRaw = false;
 
-        // 如果能拿到原生 Markdown 文本，就用原生的
         if (chatArray && chatArray[mesId] && chatArray[mesId].mes) {
             rawText = chatArray[mesId].mes;
             hasRaw = true;
@@ -716,7 +712,6 @@ function collectMessages() {
 
         if (tags.length && filterMode !== '0') {
             tags.forEach(tag => {
-                // 在纯文本层面进行正则匹配，无视任何格式干扰
                 const re = new RegExp('<\\s*' + tag + '\\b[^>]*>([\\s\\S]*?)<\\s*\\/\\s*' + tag + '\\s*>', 'gi');
                 if (filterMode === '1') {
                     processedText = processedText.replace(re, '');
@@ -733,12 +728,10 @@ function collectMessages() {
             }
         }
 
-        // 如果过滤后变为空，则跳过这条消息
         if (!processedText.trim()) return;
 
         let finalHtml = msg.html;
 
-        // 如果进行了过滤，且有原生文本，我们需要把过滤后的文本重新转回 HTML 用于图片导出
         if (tags.length && filterMode !== '0' && msg.hasRaw) {
             try {
                 if (window.marked && window.marked.parse) {
@@ -747,7 +740,6 @@ function collectMessages() {
                     const conv = new window.showdown.Converter();
                     finalHtml = conv.makeHtml(processedText);
                 } else {
-                    // 极简降级方案
                     finalHtml = processedText
                         .replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>')
                         .replace(/\n/g, '<br>');
@@ -759,7 +751,6 @@ function collectMessages() {
              finalHtml = processedText.replace(/\n/g, '<br>');
         }
 
-        // 提取纯文本用于 TXT 导出
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = finalHtml;
         const finalText = tempDiv.innerText.trim() || processedText;
@@ -878,9 +869,9 @@ function createMenuButton() {
 /* ===================== 初始化 ===================== */
 
 jQuery(async function () {
-    console.log('[ChatExporter] v2.6 开始加载...');
+    console.log('[ChatExporter] v2.7 开始加载...');
     injectStyles();
     createPanel();
     createMenuButton();
-    console.log('[ChatExporter] v2.6 加载完成');
+    console.log('[ChatExporter] v2.7 加载完成');
 });
