@@ -1,0 +1,19 @@
+.export-bg-white { background-color: #ffffff; color: #000000; padding: 20px; }
+.export-bg-black { background-color: #121212; color: #ffffff; padding: 20px; }
+.export-bg-yellow { background-color: #fff9c4; color: #333333; padding: 20px; font-family: 'Comic Sans MS', cursive, sans-serif; }
+
+.chat-export-checkbox {
+    position: absolute;
+    left: -25px;
+    top: 10px;
+    width: 18px;
+    height: 18px;
+    z-index: 100;
+}
+
+#export-canvas-container {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    width: 800px;
+}
