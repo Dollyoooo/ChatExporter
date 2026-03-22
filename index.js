@@ -58,7 +58,7 @@ function hexToRgb(hex) {
     };
 }
 
-// 修复后的标签过滤，支持原生HTML和酒馆转义符
+// 彻底修复的标签过滤，暴力匹配所有换行、段落打断和转义变体
 function processContent(content, tagsInput, filterMode) {
     if (!tagsInput || !filterMode || filterMode === '0') return content;
     const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
@@ -67,9 +67,12 @@ function processContent(content, tagsInput, filterMode) {
     let result = content;
     if (filterMode === '1') {
         tags.forEach(tag => {
+            // 兼容原生HTML、转义符，以及被酒馆Markdown打断的标签结构
             const re1 = new RegExp('<' + tag + '\\b[^>]*>[\\s\\S]*?<\\/' + tag + '>', 'gi');
-            const re2 = new RegExp('<' + tag + '\\b.*?>[\\s\\S]*?<\\/' + tag + '>', 'gi');
-            result = result.replace(re1, '').replace(re2, '');
+            const re2 = new RegExp('<' + tag + '\\b[^&]*>[\\s\\S]*?<\\/' + tag + '>', 'gi');
+            // 兼容某些极端情况：标签内部被强制插入了 <p> 等元素
+            const re3 = new RegExp('<' + tag + '\\b[\\s\\S]*?<\\/' + tag + '>', 'gi');
+            result = result.replace(re1, '').replace(re2, '').replace(re3, '');
         });
         return result;
     }
@@ -77,7 +80,7 @@ function processContent(content, tagsInput, filterMode) {
         const kept = [];
         tags.forEach(tag => {
             const re1 = new RegExp('<' + tag + '\\b[^>]*>([\\s\\S]*?)<\\/' + tag + '>', 'gi');
-            const re2 = new RegExp('<' + tag + '\\b.*?>([\\s\\S]*?)<\\/' + tag + '>', 'gi');
+            const re2 = new RegExp('<' + tag + '\\b[^&]*>([\\s\\S]*?)<\\/' + tag + '>', 'gi');
             let m;
             while ((m = re1.exec(content)) !== null) kept.push(m[1]);
             while ((m = re2.exec(content)) !== null) kept.push(m[1]);
@@ -116,18 +119,21 @@ function injectStyles() {
 }
 #ce-overlay.open { opacity:1; pointer-events:auto; }
 
-/* ===== 面板 (毛玻璃效果) ===== */
+/* ===== 面板 (更通透的毛玻璃效果) ===== */
 #ce-panel {
     position: fixed; top:50%; left:50%;
     transform: translate(-50%,-50%) scale(0.92);
     width: 440px; max-width:94vw; max-height:88vh;
-    background: rgba(30, 30, 34, 0.45);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    /* 大幅降低黑色底色，提高透明度 */
+    background: rgba(45, 48, 55, 0.15);
+    /* 增强模糊效果，确保背景花哨时文字依然清晰 */
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     z-index: 2147483641; display:flex; flex-direction:column;
-    overflow:hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    /* 减轻阴影的沉重感 */
+    overflow:hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.2);
     font-family: -apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
     color: #f0f0f0; font-size:13px;
     opacity:0; pointer-events:none;
@@ -141,7 +147,8 @@ function injectStyles() {
 /* 头部 */
 .ce-header {
     display:flex; justify-content:space-between; align-items:center;
-    padding:16px 20px; background: rgba(0, 0, 0, 0.2);
+    /* 改为微白底色，去掉沉重的黑色 */
+    padding:16px 20px; background: rgba(255, 255, 255, 0.05);
     border-bottom:1px solid rgba(255,255,255,0.08);
     font-size:15px; font-weight:600; flex-shrink:0;
 }
