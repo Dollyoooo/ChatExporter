@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
 
 // ================================================================
-//  Chat Exporter v2.1 — 聊天记录导出器
+//  Chat Exporter v2.2 — 聊天记录导出器
 // ================================================================
 
 /* ===================== 状态 ===================== */
@@ -9,16 +9,17 @@ const state = {
     selectedMesIds: new Set(),
     style: 'default',
     format: 'img',
-    bgColor: '#f5f5f5',
-    textColor: '#333333',
+    bgColor: '#ffffff',
+    textColor: '#000000',
     colorTarget: 'bg',
     selectMethod: 'manual',
     selectionMode: false,
+    theme: 'light' // 'light' 或 'dark'
 };
 
 /* ===================== 预设色板 ===================== */
 const PRESET_COLORS = [
-    '#ffffff','#f5f5f5','#e0e0e0','#bdbdbd','#9e9e9e','#757575','#424242','#212121',
+    '#ffffff','#f5f5f5','#e0e0e0','#bdbdbd','#9e9e9e','#757575','#424242','#212121','#000000',
     '#ffcdd2','#ef9a9a','#e57373','#ef5350','#f44336','#e53935','#c62828','#b71c1c',
     '#f8bbd0','#f48fb1','#f06292','#ec407a','#e91e63','#d81b60','#ad1457','#880e4f',
     '#e1bee7','#ce93d8','#ba68c8','#ab47bc','#9c27b0','#8e24aa','#6a1b9a','#4a148c',
@@ -58,26 +59,34 @@ function hexToRgb(hex) {
     };
 }
 
-// 终极标签过滤：先用DOM解析删除标签元素，再用正则兜底清理转义残留
+// 提取单条消息数据（修复导出按钮失效的关键）
+function extractMessageData(mes) {
+    const nameEl = mes.querySelector('.ch_name');
+    const textEl = mes.querySelector('.mes_text');
+    if (!nameEl || !textEl) return null;
+    return {
+        name: nameEl.innerText.trim(),
+        text: textEl.innerText.trim(),
+        html: textEl.innerHTML
+    };
+}
+
+// 终极标签过滤
 function processContent(content, tagsInput, filterMode) {
     if (!tagsInput || !filterMode || filterMode === '0') return content;
     const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
     if (!tags.length) return content;
 
-    // 第一步：先用正则清理 <tag>...</tag> 转义形式（贪婪匹配，跨任意行）
     let cleaned = content;
     tags.forEach(tag => {
-        // 转义形式 <thinking> ... </thinking>（贪婪，吃掉中间所有内容）
         const reEsc = new RegExp('<\\s*' + tag + '(?:\\s[^&]*?)?>[\\s\\S]*?<\\s*/\\s*' + tag + '\\s*>', 'gi');
         cleaned = cleaned.replace(reEsc, '');
     });
 
-    // 第二步：创建一个临时 DOM 容器来处理原生 HTML 标签
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = cleaned;
 
     if (filterMode === '1') {
-        // 去除模式：删除所有匹配的标签元素
         tags.forEach(tag => {
             const elements = tempDiv.querySelectorAll(tag);
             elements.forEach(el => el.remove());
@@ -86,7 +95,6 @@ function processContent(content, tagsInput, filterMode) {
     }
 
     if (filterMode === '2') {
-        // 仅保留模式：只提取匹配标签内部的内容
         const kept = [];
         tags.forEach(tag => {
             const elements = tempDiv.querySelectorAll(tag);
@@ -94,7 +102,6 @@ function processContent(content, tagsInput, filterMode) {
                 if (el.innerHTML.trim()) kept.push(el.innerHTML);
             });
         });
-        // 如果DOM里没找到，尝试从转义形式中提取
         if (!kept.length) {
             tags.forEach(tag => {
                 const reEsc = new RegExp('<\\s*' + tag + '(?:\\s[^&]*?)?>([\\s\\S]*?)<\\s*/\\s*' + tag + '\\s*>', 'gi');
@@ -121,264 +128,190 @@ function injectStyles() {
 /* ===== 遮罩层 ===== */
 #ce-overlay {
     position: fixed; top:0; left:0; width:100vw; height:100vh;
-    background: rgba(0,0,0,0.4); z-index: 2147483640;
-    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.6); z-index: 2147483640;
     opacity:0; pointer-events:none;
-    transition: opacity .3s ease;
+    transition: opacity .2s ease;
 }
 #ce-overlay.open { opacity:1; pointer-events:auto; }
 
-/* ===== 面板 (毛玻璃效果) ===== */
+/* ===== 面板基础 (全端适配) ===== */
 #ce-panel {
-    position: fixed; top:50%; left:50%;
-    transform: translate(-50%,-50%) scale(0.92);
-    width: 440px; max-width:94vw; max-height:88vh;
-    background: rgba(30, 32, 38, 0.55);
-    backdrop-filter: blur(22px) saturate(1.2);
-    -webkit-backdrop-filter: blur(22px) saturate(1.2);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
+    position: fixed; top: 5vh; left: 50%;
+    transform: translateX(-50%) scale(0.95);
+    width: 440px; max-width: 94vw; max-height: 90vh;
+    border-radius: 12px;
     z-index: 2147483641; display:flex; flex-direction:column;
-    overflow:hidden; box-shadow: 0 12px 36px rgba(0,0,0,0.3);
+    overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     font-family: -apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
-    color: #f0f0f0; font-size:13px;
+    font-size:13px;
     opacity:0; pointer-events:none;
-    transition: opacity .3s cubic-bezier(0.4, 0, 0.2, 1), transform .3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity .2s ease, transform .2s ease;
 }
 #ce-panel.open {
     opacity:1; pointer-events:auto;
-    transform: translate(-50%,-50%) scale(1);
+    transform: translateX(-50%) scale(1);
 }
 
-/* 头部 */
+/* ===== 日间模式 (纯白) ===== */
+#ce-panel.theme-light { background: #ffffff; color: #000000; border: 1px solid #dddddd; }
+#ce-panel.theme-light .ce-header { background: #f5f5f5; border-bottom: 1px solid #dddddd; }
+#ce-panel.theme-light .ce-close { color: #666; }
+#ce-panel.theme-light .ce-close:hover { background: #e0e0e0; color: #000; }
+#ce-panel.theme-light .ce-theme-btn { background: #e0e0e0; color: #000; border: 1px solid #ccc; }
+#ce-panel.theme-light .ce-section { background: #fafafa; border: 1px solid #eeeeee; }
+#ce-panel.theme-light .ce-section-title { color: #555555; }
+#ce-panel.theme-light .ce-input, #ce-panel.theme-light .ce-number-input, #ce-panel.theme-light .ce-hex-input { background: #ffffff; border: 1px solid #cccccc; color: #000000; }
+#ce-panel.theme-light .ce-btn { background: #f0f0f0; border: 1px solid #cccccc; color: #000000; }
+#ce-panel.theme-light .ce-btn:hover { background: #e0e0e0; }
+#ce-panel.theme-light .ce-btn-primary { background: #000000; color: #ffffff; border-color: #000000; }
+#ce-panel.theme-light .ce-btn-primary:hover { background: #333333; }
+#ce-panel.theme-light .ce-radio-group label { color: #000000; }
+#ce-panel.theme-light .ce-style-card { background: #ffffff; border: 2px solid #dddddd; }
+#ce-panel.theme-light .ce-style-card.active { border-color: #000000; background: #f5f5f5; }
+#ce-panel.theme-light .ce-target-btn { background: #f0f0f0; border: 1px solid #cccccc; color: #000; }
+#ce-panel.theme-light .ce-target-btn.active { background: #000000; color: #ffffff; }
+#ce-panel.theme-light .ce-picker-tab { background: #f0f0f0; border: 1px solid #cccccc; color: #000; }
+#ce-panel.theme-light .ce-picker-tab.active { background: #dddddd; border-color: #999999; }
+#ce-panel.theme-light .ce-export-row { background: #f5f5f5; border-top: 1px solid #dddddd; }
+#ce-panel.theme-light .ce-slider-val { color: #333; }
+
+/* ===== 夜间模式 (纯黑) ===== */
+#ce-panel.theme-dark { background: #000000; color: #ffffff; border: 1px solid #333333; }
+#ce-panel.theme-dark .ce-header { background: #111111; border-bottom: 1px solid #333333; }
+#ce-panel.theme-dark .ce-close { color: #aaaaaa; }
+#ce-panel.theme-dark .ce-close:hover { background: #222222; color: #ffffff; }
+#ce-panel.theme-dark .ce-theme-btn { background: #222222; color: #fff; border: 1px solid #444; }
+#ce-panel.theme-dark .ce-section { background: #0a0a0a; border: 1px solid #222222; }
+#ce-panel.theme-dark .ce-section-title { color: #aaaaaa; }
+#ce-panel.theme-dark .ce-input, #ce-panel.theme-dark .ce-number-input, #ce-panel.theme-dark .ce-hex-input { background: #000000; border: 1px solid #444444; color: #ffffff; }
+#ce-panel.theme-dark .ce-btn { background: #111111; border: 1px solid #444444; color: #ffffff; }
+#ce-panel.theme-dark .ce-btn:hover { background: #222222; }
+#ce-panel.theme-dark .ce-btn-primary { background: #ffffff; color: #000000; border-color: #ffffff; }
+#ce-panel.theme-dark .ce-btn-primary:hover { background: #cccccc; }
+#ce-panel.theme-dark .ce-radio-group label { color: #ffffff; }
+#ce-panel.theme-dark .ce-style-card { background: #000000; border: 2px solid #333333; }
+#ce-panel.theme-dark .ce-style-card.active { border-color: #ffffff; background: #111111; }
+#ce-panel.theme-dark .ce-target-btn { background: #111111; border: 1px solid #444444; color: #fff; }
+#ce-panel.theme-dark .ce-target-btn.active { background: #ffffff; color: #000000; }
+#ce-panel.theme-dark .ce-picker-tab { background: #111111; border: 1px solid #444444; color: #fff; }
+#ce-panel.theme-dark .ce-picker-tab.active { background: #333333; border-color: #666666; }
+#ce-panel.theme-dark .ce-export-row { background: #111111; border-top: 1px solid #333333; }
+#ce-panel.theme-dark .ce-slider-val { color: #ccc; }
+
+/* 头部与通用组件 */
 .ce-header {
     display:flex; justify-content:space-between; align-items:center;
-    padding:16px 20px; background: rgba(0, 0, 0, 0.12);
-    border-bottom:1px solid rgba(255,255,255,0.08);
-    font-size:15px; font-weight:600; flex-shrink:0;
+    padding:16px 20px; font-size:15px; font-weight:600; flex-shrink:0;
+}
+.ce-theme-btn {
+    padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: normal;
 }
 .ce-close {
-    cursor:pointer; font-size:22px; color:#aaa;
-    width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:22px; width:30px; height:30px;
+    display:flex; align-items:center; justify-content:center;
     border-radius:6px; transition:all .15s;
 }
-.ce-close:hover { color:#fff; background:rgba(255,255,255,0.1); }
-
-/* 主体 */
 .ce-body { padding:16px 20px; overflow-y:auto; flex:1; }
 .ce-body::-webkit-scrollbar { width:6px; }
 .ce-body::-webkit-scrollbar-track { background:transparent; }
-.ce-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:3px; }
+.ce-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
 
-/* 区段 */
-.ce-section { margin-bottom:18px; }
-.ce-section-title {
-    font-size:11px; font-weight:700; color:#aaa;
-    margin-bottom:10px; text-transform:uppercase; letter-spacing:1.5px;
-}
+.ce-section { margin-bottom:18px; padding: 12px; border-radius: 8px; }
+.ce-section-title { font-size:12px; font-weight:700; margin-bottom:10px; }
 
-/* 单选组 */
 .ce-radio-group { display:flex; gap:14px; flex-wrap:wrap; }
-.ce-radio-group label {
-    display:flex; align-items:center; gap:5px; cursor:pointer; font-size:13px; color:#ddd;
-}
-.ce-radio-group input[type="radio"] { accent-color:#5b9bd5; margin:0; }
+.ce-radio-group label { display:flex; align-items:center; gap:5px; cursor:pointer; font-size:13px; }
+.ce-radio-group input[type="radio"] { margin:0; }
 
-/* 输入框 */
-.ce-input {
-    width:100%; padding:8px 12px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15);
-    border-radius:8px; color:#fff; font-size:13px; outline:none;
-    box-sizing:border-box; transition:border-color .2s;
-}
-.ce-input:focus { border-color:#5b9bd5; background:rgba(0,0,0,0.3); }
-.ce-number-input {
-    width:80px; padding:6px 8px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15);
-    border-radius:6px; color:#fff; font-size:13px; outline:none; text-align:center;
-    box-sizing:border-box;
-}
+.ce-input { width:100%; padding:8px 12px; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box; }
+.ce-number-input { width:80px; padding:6px 8px; border-radius:6px; font-size:13px; outline:none; text-align:center; box-sizing:border-box; }
 
-/* 按钮 */
-.ce-btn {
-    padding:8px 16px; border:1px solid rgba(255,255,255,0.15); border-radius:8px;
-    background:rgba(255,255,255,0.05); color:#fff; cursor:pointer; font-size:13px;
-    transition:all .2s; user-select:none;
-}
-.ce-btn:hover { background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.3); }
-.ce-btn-primary { background:#5b9bd5; border-color:#5b9bd5; color:#fff; font-weight:600; }
-.ce-btn-primary:hover { background:#6daae0; border-color:#6daae0; }
+.ce-btn { padding:8px 16px; border-radius:6px; cursor:pointer; font-size:13px; transition:all .2s; user-select:none; }
+.ce-btn-primary { font-weight:600; }
 
-/* 样式卡片 */
 .ce-style-cards { display:flex; gap:10px; flex-wrap:wrap; }
-.ce-style-card {
-    flex:1; min-width:85px; padding:10px 8px; border:2px solid rgba(255,255,255,0.1);
-    border-radius:12px; text-align:center; cursor:pointer;
-    transition:all .2s; background:rgba(0,0,0,0.2);
-}
-.ce-style-card:hover { border-color:rgba(255,255,255,0.3); }
-.ce-style-card.active { border-color:#5b9bd5; background:rgba(91,155,213,0.15); }
-.ce-style-preview {
-    width:100%; height:42px; border-radius:8px;
-    display:flex; align-items:center; justify-content:center;
-    font-weight:bold; font-size:16px; margin-bottom:6px;
-}
-.ce-style-card span { font-size:11px; color:#bbb; }
+.ce-style-card { flex:1; min-width:85px; padding:10px 8px; border-radius:8px; text-align:center; cursor:pointer; transition:all .2s; }
+.ce-style-preview { width:100%; height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:16px; margin-bottom:6px; border: 1px solid #ccc; }
+.ce-style-card span { font-size:11px; }
 
-/* 颜色区域 */
-.ce-color-row {
-    display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;
-}
-.ce-color-row label { font-size:12px; color:#ccc; white-space:nowrap; }
-.ce-hex-input {
-    width:76px; padding:6px 8px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.15);
-    border-radius:6px; color:#fff; font-size:12px; font-family:monospace; outline:none;
-    box-sizing:border-box;
-}
-.ce-swatch {
-    width:28px; height:28px; border-radius:6px; border:2px solid rgba(255,255,255,0.2); cursor:pointer; flex-shrink:0;
-}
+.ce-color-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.ce-hex-input { width:76px; padding:6px 8px; border-radius:6px; font-size:12px; font-family:monospace; outline:none; box-sizing:border-box; }
+.ce-swatch { width:28px; height:28px; border-radius:6px; border:1px solid #888; cursor:pointer; flex-shrink:0; }
 
-/* 颜色目标切换 */
 .ce-target-btns { display:flex; gap:8px; margin-bottom:12px; }
-.ce-target-btn {
-    flex:1; padding:8px; border:1px solid rgba(255,255,255,0.15); border-radius:8px;
-    background:rgba(255,255,255,0.05); color:#ccc; cursor:pointer; font-size:12px;
-    text-align:center; transition:all .2s;
-}
-.ce-target-btn.active { background:#5b9bd5; border-color:#5b9bd5; color:#fff; }
+.ce-target-btn { flex:1; padding:8px; border-radius:6px; cursor:pointer; font-size:12px; text-align:center; transition:all .2s; }
 
-/* 调色盘标签 */
 .ce-picker-tabs { display:flex; gap:6px; margin-bottom:10px; }
-.ce-picker-tab {
-    flex:1; padding:6px; border:1px solid rgba(255,255,255,0.1); border-radius:6px;
-    background:rgba(0,0,0,0.2); color:#bbb; cursor:pointer; font-size:11px;
-    text-align:center; transition:all .2s;
-}
-.ce-picker-tab.active { background:rgba(255,255,255,0.15); color:#fff; border-color:rgba(255,255,255,0.3); }
-
-/* 调色盘内容 */
+.ce-picker-tab { flex:1; padding:6px; border-radius:6px; cursor:pointer; font-size:11px; text-align:center; transition:all .2s; }
 .ce-picker-pane { display:none; }
 .ce-picker-pane.active { display:block; }
 
-/* 色块网格 */
-.ce-color-grid {
-    display:grid; grid-template-columns:repeat(8,1fr); gap:6px;
-}
-.ce-grid-swatch {
-    aspect-ratio:1; border-radius:6px; cursor:pointer;
-    border:2px solid transparent; transition:all .15s; box-sizing:border-box;
-}
-.ce-grid-swatch:hover { transform:scale(1.2); border-color:#fff; z-index:1; position:relative; box-shadow:0 4px 8px rgba(0,0,0,0.3); }
+.ce-color-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
+.ce-grid-swatch { aspect-ratio:1; border-radius:4px; cursor:pointer; border:1px solid #888; transition:all .15s; box-sizing:border-box; }
+.ce-grid-swatch:hover { transform:scale(1.1); }
 
-/* 光谱画布 */
-#ce-spectrum {
-    width:100%; height:150px; border-radius:8px; cursor:crosshair; border:1px solid rgba(255,255,255,0.15);
-    display:block;
-}
+#ce-spectrum { width:100%; height:150px; border-radius:6px; cursor:crosshair; border:1px solid #888; display:block; }
 
-/* 滑块 */
 .ce-slider-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
 .ce-slider-row label { font-size:13px; font-weight:700; width:14px; text-align:center; }
 .ce-slider-row input[type="range"] { flex:1; height:6px; }
-#ce-r-slider { accent-color:#ff5252; }
-#ce-g-slider { accent-color:#69f0ae; }
-#ce-b-slider { accent-color:#448aff; }
-.ce-slider-val { font-size:12px; font-family:monospace; color:#ccc; width:30px; text-align:right; }
+.ce-slider-val { font-size:12px; font-family:monospace; width:30px; text-align:right; }
 
-/* 楼层范围 */
 .ce-floor-range { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.ce-select-info { font-size:12px; }
 
-/* 选择信息 */
-.ce-select-info { font-size:12px; color:#aaa; }
-
-/* 底部导出行 */
-.ce-export-row {
-    padding:14px 20px; border-top:1px solid rgba(255,255,255,0.08);
-    background:rgba(0,0,0,0.1);
-    display:flex; justify-content:center; flex-shrink:0;
-}
+.ce-export-row { padding:14px 20px; display:flex; justify-content:center; flex-shrink:0; }
 
 /* ===== 完成选择按钮 ===== */
 #ce-confirm-select-btn {
     position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
-    padding:14px 40px; background:rgba(46,125,50,0.9); color:#fff; border:1px solid rgba(255,255,255,0.2);
-    border-radius:30px; font-size:15px; font-weight:600; cursor:pointer;
+    padding:14px 40px; border-radius:30px; font-size:15px; font-weight:600; cursor:pointer;
     z-index:2147483645; box-shadow:0 8px 24px rgba(0,0,0,0.4);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     transition:all .2s; user-select:none;
 }
-#ce-confirm-select-btn:hover { background:rgba(56,142,60,1); transform:translateX(-50%) scale(1.05); }
+#ce-confirm-select-btn.theme-light { background:#000000; color:#ffffff; border:1px solid #333; }
+#ce-confirm-select-btn.theme-dark { background:#ffffff; color:#000000; border:1px solid #ccc; }
+#ce-confirm-select-btn:hover { transform:translateX(-50%) scale(1.05); }
 
-/* ===== 消息复选框 ===== */
+/* ===== 消息复选框 (黑白适配) ===== */
 .ce-checkbox {
     position:absolute !important; left:6px !important; top:10px !important;
     width:20px !important; height:20px !important; z-index:2147483635 !important;
-    cursor:pointer !important; accent-color:#5b9bd5 !important;
-    margin:0 !important;
+    cursor:pointer !important; margin:0 !important;
 }
+.ce-checkbox.theme-light { accent-color: #000000 !important; }
+.ce-checkbox.theme-dark { accent-color: #ffffff !important; }
 
 /* ===== 导出渲染容器 ===== */
-#ce-render-container {
-    position:absolute; top:-99999px; left:-99999px; width:800px;
-}
+#ce-render-container { position:absolute; top:-99999px; left:-99999px; width:800px; }
 
 /* --- 默认样式 --- */
-.ce-export-default {
-    padding:28px; line-height:1.9; font-size:15px;
-    font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
-}
-.ce-export-default .ce-msg {
-    margin-bottom:18px; padding-bottom:14px;
-    border-bottom:1px solid rgba(128,128,128,.18);
-}
+.ce-export-default { padding:28px; line-height:1.9; font-size:15px; font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; }
+.ce-export-default .ce-msg { margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid rgba(128,128,128,.3); }
 .ce-export-default .ce-msg:last-child { border-bottom:none; margin-bottom:0; }
 .ce-export-default .ce-msg-name { font-weight:700; margin-bottom:6px; font-size:14px; }
 
 /* --- 简约白卡 --- */
-.ce-export-white-card {
-    padding:24px; background:#f0f2f5; line-height:1.85; font-size:15px;
-    font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; color:#333;
-}
-.ce-export-white-card .ce-msg {
-    background:#fff; border-radius:12px; padding:18px 22px;
-    margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.08);
-}
+.ce-export-white-card { padding:24px; background:#f0f2f5; line-height:1.85; font-size:15px; font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; color:#333; }
+.ce-export-white-card .ce-msg { background:#fff; border-radius:12px; padding:18px 22px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
 .ce-export-white-card .ce-msg:last-child { margin-bottom:0; }
-.ce-export-white-card .ce-msg-name {
-    font-weight:700; color:#1a73e8; margin-bottom:8px; font-size:13px;
-    letter-spacing:.5px;
-}
+.ce-export-white-card .ce-msg-name { font-weight:700; color:#1a73e8; margin-bottom:8px; font-size:13px; letter-spacing:.5px; }
 
 /* --- 深色极简 --- */
-.ce-export-dark-minimal {
-    padding:28px; background:#1a1a2e; line-height:1.85; font-size:15px;
-    font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; color:#e2e2e2;
-}
-.ce-export-dark-minimal .ce-msg {
-    padding-bottom:16px; margin-bottom:16px;
-    border-bottom:1px solid rgba(255,255,255,.06);
-}
+.ce-export-dark-minimal { padding:28px; background:#1a1a2e; line-height:1.85; font-size:15px; font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; color:#e2e2e2; }
+.ce-export-dark-minimal .ce-msg { padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,.1); }
 .ce-export-dark-minimal .ce-msg:last-child { border-bottom:none; margin-bottom:0; }
-.ce-export-dark-minimal .ce-msg-name {
-    font-weight:600; color:#8b92ff; margin-bottom:6px; font-size:13px;
-}
+.ce-export-dark-minimal .ce-msg-name { font-weight:600; color:#8b92ff; margin-bottom:6px; font-size:13px; }
 
 /* --- 暖色便签 --- */
-.ce-export-warm-note {
-    padding:30px 34px; background:#faf6ee; line-height:2; font-size:15px;
-    font-family:Georgia,'Noto Serif SC','Source Han Serif SC',serif; color:#4a3f2f;
-}
-.ce-export-warm-note .ce-msg {
-    padding-left:16px; margin-bottom:18px;
-    border-left:3px solid #c9a96e;
-}
+.ce-export-warm-note { padding:30px 34px; background:#faf6ee; line-height:2; font-size:15px; font-family:Georgia,'Noto Serif SC','Source Han Serif SC',serif; color:#4a3f2f; }
+.ce-export-warm-note .ce-msg { padding-left:16px; margin-bottom:18px; border-left:3px solid #c9a96e; }
 .ce-export-warm-note .ce-msg:last-child { margin-bottom:0; }
-.ce-export-warm-note .ce-msg-name {
-    font-weight:700; color:#8b6c2a; margin-bottom:6px; font-size:13px;
-}
+.ce-export-warm-note .ce-msg-name { font-weight:700; color:#8b6c2a; margin-bottom:6px; font-size:13px; }
 
 /* ===== 扩展菜单项 ===== */
 #ce-ext-menu-item { cursor:pointer; }
-#ce-ext-menu-item:hover { background:rgba(255,255,255,.08); }
+#ce-ext-menu-item:hover { background:rgba(128,128,128,.1); }
 
     `;
     document.head.appendChild(el);
@@ -389,10 +322,9 @@ function injectStyles() {
 function createPanel() {
     const html = `
     <div id="ce-overlay"></div>
-    <div id="ce-panel">
+    <div id="ce-panel" class="theme-light">
         <div class="ce-header">
             <div style="display:flex; align-items:center; gap:8px;">
-                <!-- 纯代码绘制的 SVG 图标 -->
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
@@ -400,15 +332,18 @@ function createPanel() {
                 </svg>
                 <span>聊天记录导出器</span>
             </div>
-            <div class="ce-close" id="ce-close-btn">×</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="ce-theme-btn" id="ce-theme-btn">切换夜间</div>
+                <div class="ce-close" id="ce-close-btn">×</div>
+            </div>
         </div>
         <div class="ce-body">
 
             <!-- 楼层跳转 -->
-            <div class="ce-section" style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.15); padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
-                <span style="font-weight:600; color:#ddd;">快速跳转</span>
-                <input type="number" class="ce-number-input" id="ce-jump-input" placeholder="楼层" min="1" style="width:80px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">
-                <button class="ce-btn" id="ce-jump-btn" style="background:rgba(255,255,255,0.1); border:none;">跳转</button>
+            <div class="ce-section" style="display:flex; align-items:center; gap:10px;">
+                <span style="font-weight:600;">快速跳转</span>
+                <input type="number" class="ce-number-input" id="ce-jump-input" placeholder="楼层" min="1">
+                <button class="ce-btn" id="ce-jump-btn">跳转</button>
             </div>
 
             <!-- 消息选择 -->
@@ -427,9 +362,9 @@ function createPanel() {
                 </div>
                 <div id="ce-range-area" style="display:none;margin-top:10px">
                     <div class="ce-floor-range">
-                        <span style="color:#aaa;font-size:12px">楼层</span>
+                        <span style="font-size:12px">楼层</span>
                         <input type="number" class="ce-number-input" id="ce-floor-start" placeholder="起始" min="1">
-                        <span style="color:#888">~</span>
+                        <span>~</span>
                         <input type="number" class="ce-number-input" id="ce-floor-end" placeholder="结束" min="1">
                     </div>
                 </div>
@@ -460,7 +395,7 @@ function createPanel() {
                 <div class="ce-section-title">导出样式</div>
                 <div class="ce-style-cards">
                     <div class="ce-style-card active" data-style="default">
-                        <div class="ce-style-preview" style="background:#f5f5f5;color:#333">Aa</div>
+                        <div class="ce-style-preview" style="background:#ffffff;color:#000">Aa</div>
                         <span>默认</span>
                     </div>
                     <div class="ce-style-card" data-style="white-card">
@@ -485,12 +420,12 @@ function createPanel() {
                 <div class="ce-section-title">默认颜色调节</div>
                 <div class="ce-color-row">
                     <label>背景色</label>
-                    <input type="text" class="ce-hex-input" id="ce-bg-hex" value="#f5f5f5">
-                    <div class="ce-swatch" id="ce-bg-swatch" style="background:#f5f5f5"></div>
+                    <input type="text" class="ce-hex-input" id="ce-bg-hex" value="#ffffff">
+                    <div class="ce-swatch" id="ce-bg-swatch" style="background:#ffffff"></div>
                     <div style="flex:1"></div>
                     <label>文字色</label>
-                    <input type="text" class="ce-hex-input" id="ce-text-hex" value="#333333">
-                    <div class="ce-swatch" id="ce-text-swatch" style="background:#333333"></div>
+                    <input type="text" class="ce-hex-input" id="ce-text-hex" value="#000000">
+                    <div class="ce-swatch" id="ce-text-swatch" style="background:#000000"></div>
                 </div>
                 <div class="ce-target-btns">
                     <div class="ce-target-btn active" data-target="bg">编辑背景色</div>
@@ -511,18 +446,18 @@ function createPanel() {
                     <div class="ce-picker-pane" data-tab="slider">
                         <div class="ce-slider-row">
                             <label style="color:#ff5252">R</label>
-                            <input type="range" id="ce-r-slider" min="0" max="255" value="245">
-                            <span class="ce-slider-val" id="ce-r-val">245</span>
+                            <input type="range" id="ce-r-slider" min="0" max="255" value="255">
+                            <span class="ce-slider-val" id="ce-r-val">255</span>
                         </div>
                         <div class="ce-slider-row">
                             <label style="color:#69f0ae">G</label>
-                            <input type="range" id="ce-g-slider" min="0" max="255" value="245">
-                            <span class="ce-slider-val" id="ce-g-val">245</span>
+                            <input type="range" id="ce-g-slider" min="0" max="255" value="255">
+                            <span class="ce-slider-val" id="ce-g-val">255</span>
                         </div>
                         <div class="ce-slider-row">
                             <label style="color:#448aff">B</label>
-                            <input type="range" id="ce-b-slider" min="0" max="255" value="245">
-                            <span class="ce-slider-val" id="ce-b-val">245</span>
+                            <input type="range" id="ce-b-slider" min="0" max="255" value="255">
+                            <span class="ce-slider-val" id="ce-b-val">255</span>
                         </div>
                     </div>
                 </div>
@@ -530,7 +465,7 @@ function createPanel() {
 
         </div>
         <div class="ce-export-row">
-            <button class="ce-btn ce-btn-primary" id="ce-export-btn" style="width:180px;padding:12px;font-size:15px;border-radius:24px;box-shadow:0 4px 12px rgba(91,155,213,0.3)">导 出</button>
+            <button class="ce-btn ce-btn-primary" id="ce-export-btn" style="width:180px;padding:12px;font-size:15px;border-radius:24px;">导 出</button>
         </div>
     </div>`;
 
@@ -541,6 +476,22 @@ function createPanel() {
 /* ===================== 面板事件绑定 ===================== */
 
 function setupPanelEvents() {
+    // 主题切换
+    document.getElementById('ce-theme-btn').addEventListener('click', function() {
+        const panel = document.getElementById('ce-panel');
+        if (state.theme === 'light') {
+            state.theme = 'dark';
+            panel.classList.remove('theme-light');
+            panel.classList.add('theme-dark');
+            this.textContent = '切换日间';
+        } else {
+            state.theme = 'light';
+            panel.classList.remove('theme-dark');
+            panel.classList.add('theme-light');
+            this.textContent = '切换夜间';
+        }
+    });
+
     // 关闭
     document.getElementById('ce-close-btn').addEventListener('click', closePanel);
     document.getElementById('ce-overlay').addEventListener('click', closePanel);
@@ -552,7 +503,7 @@ function setupPanelEvents() {
         const allMes = document.querySelectorAll('#chat .mes');
         if (floor <= allMes.length) {
             allMes[floor - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            closePanel(); // 跳转后自动关闭面板方便查看
+            closePanel();
         } else {
             alert('楼层不存在，当前最大楼层为 ' + allMes.length);
         }
@@ -703,7 +654,6 @@ function drawSpectrum() {
 
     const ctx = canvas.getContext('2d');
 
-    // 水平色相渐变
     const hueGrad = ctx.createLinearGradient(0, 0, w, 0);
     hueGrad.addColorStop(0, '#ff0000');
     hueGrad.addColorStop(1 / 6, '#ffff00');
@@ -715,14 +665,12 @@ function drawSpectrum() {
     ctx.fillStyle = hueGrad;
     ctx.fillRect(0, 0, w, 150);
 
-    // 纵向白色覆盖
     const whiteGrad = ctx.createLinearGradient(0, 0, 0, 150);
     whiteGrad.addColorStop(0, 'rgba(255,255,255,1)');
     whiteGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
     ctx.fillStyle = whiteGrad;
     ctx.fillRect(0, 0, w, 150);
 
-    // 纵向黑色覆盖
     const blackGrad = ctx.createLinearGradient(0, 0, 0, 150);
     blackGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
     blackGrad.addColorStop(1, 'rgba(0,0,0,1)');
@@ -776,7 +724,8 @@ function enterSelectionMode() {
         const mesId = mes.getAttribute('mesid');
         const cb = document.createElement('input');
         cb.type = 'checkbox';
-        cb.className = 'ce-checkbox';
+        // 根据当前主题赋予复选框颜色类
+        cb.className = 'ce-checkbox ' + (state.theme === 'light' ? 'theme-light' : 'theme-dark');
         cb.dataset.mesid = mesId;
         cb.checked = state.selectedMesIds.has(mesId);
         cb.addEventListener('click', function (e) { e.stopPropagation(); });
@@ -791,11 +740,14 @@ function enterSelectionMode() {
     if (!document.getElementById('ce-confirm-select-btn')) {
         const btn = document.createElement('button');
         btn.id = 'ce-confirm-select-btn';
-        btn.textContent = '✓ 完成选择';
+        btn.className = state.theme === 'light' ? 'theme-light' : 'theme-dark';
+        btn.textContent = '完成选择';
         btn.addEventListener('click', exitSelectionMode);
         document.body.appendChild(btn);
     } else {
-        document.getElementById('ce-confirm-select-btn').style.display = '';
+        const btn = document.getElementById('ce-confirm-select-btn');
+        btn.className = state.theme === 'light' ? 'theme-light' : 'theme-dark';
+        btn.style.display = '';
     }
 }
 
@@ -846,7 +798,6 @@ function collectMessages() {
         });
     }
 
-    // 标签过滤
     const filtered = [];
     raw.forEach(msg => {
         const text = processContent(msg.text, tagsInput, filterMode);
@@ -957,7 +908,6 @@ function createMenuButton() {
     const item = document.createElement('div');
     item.id = 'ce-ext-menu-item';
     item.className = 'list-group-item flex-container flexGap5';
-    // 菜单里的图标也换成一个内置的 FontAwesome 图标，去掉 emoji
     item.innerHTML = '<div class="fa-solid fa-file-export extensionsMenuExtensionButton"></div><span>聊天导出</span>';
     item.addEventListener('click', function () {
         const trigger = document.getElementById('extensionsMenuButton');
@@ -970,9 +920,9 @@ function createMenuButton() {
 /* ===================== 初始化 ===================== */
 
 jQuery(async function () {
-    console.log('[ChatExporter] v2.1 开始加载...');
+    console.log('[ChatExporter] v2.2 开始加载...');
     injectStyles();
     createPanel();
     createMenuButton();
-    console.log('[ChatExporter] v2.1 加载完成');
+    console.log('[ChatExporter] v2.2 加载完成');
 });
