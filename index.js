@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
 
 // ================================================================
-//  Chat Exporter v2.5 — 聊天记录导出器
+//  Chat Exporter v2.6 — 聊天记录导出器
 // ================================================================
 
 const state = {
@@ -57,54 +57,6 @@ function hexToRgb(hex) {
     };
 }
 
-function extractMessageData(mes) {
-    const nameEl = mes.querySelector('.ch_name');
-    const textEl = mes.querySelector('.mes_text');
-    if (!nameEl || !textEl) return null;
-    return {
-        name: nameEl.innerText.trim(),
-        html: textEl.innerHTML
-    };
-}
-
-/*
- * 终极标签过滤函数
- * 无视 Markdown 生成的 <p> 标签包裹，直接匹配起始标签和结束标签之间的所有字符
- */
-function processContent(htmlContent, tagsInput, filterMode) {
-    if (!tagsInput || !filterMode || filterMode === '0') return htmlContent;
-    const tags = tagsInput.split(',').map(t => t.trim().replace(/^<\/?|\/?>$/g, '')).filter(Boolean);
-    if (!tags.length) return htmlContent;
-
-    let result = htmlContent;
-    let kept = [];
-
-    tags.forEach(tag => {
-        // 匹配原生 <tag> 或转义 <tag>，允许前后有 <p> 标签包裹
-        const startPattern = `(?:<p>\\s*)?(?:<|<)\\s*${tag}\\b[^>]*?(?:>|>)(?:\\s*</p>)?`;
-        const endPattern = `(?:<p>\\s*)?(?:<|<)/\\s*${tag}\\s*(?:>|>)(?:\\s*</p>)?`;
-
-        if (filterMode === '1') {
-            // 去除模式：匹配开头、结尾以及中间的所有内容 ([\s\S]*?)
-            const re = new RegExp(startPattern + '[\\s\\S]*?' + endPattern, 'gi');
-            result = result.replace(re, '');
-        } else if (filterMode === '2') {
-            // 仅保留模式：提取中间的内容
-            const re = new RegExp(startPattern + '([\\s\\S]*?)' + endPattern, 'gi');
-            let m;
-            while ((m = re.exec(htmlContent)) !== null) {
-                if (m[1].trim()) kept.push(m[1].trim());
-            }
-        }
-    });
-
-    if (filterMode === '2') {
-        return kept.length ? kept.join('<br><br>') : '';
-    }
-
-    return result;
-}
-
 /* ===================== 样式注入 ===================== */
 
 function injectStyles() {
@@ -120,35 +72,28 @@ function injectStyles() {
 }
 #ce-overlay.open { opacity:1; pointer-events:auto; }
 
-/* ===== 面板基础 (纯色不透明) ===== */
+/* ===== 面板基础 (纯色不透明，全端居中留空) ===== */
 #ce-panel {
-    position:fixed; top:5vh; left:50%;
-    transform:translateX(-50%);
-    width:440px; max-width:94vw; height:auto; max-height:90vh;
+    position:fixed; top:50%; left:50%;
+    transform:translate(-50%, -50%) scale(0.95);
+    width:440px; max-width:90vw; height:auto; max-height:85vh;
     border-radius:12px;
     z-index:2147483641; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
     font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
     font-size:13px;
     opacity:0; pointer-events:none;
-    transition:opacity .2s ease;
+    transition:opacity .2s ease, transform .2s ease;
 }
 #ce-panel.open {
     opacity:1; pointer-events:auto;
+    transform:translate(-50%, -50%) scale(1);
 }
 
-/* ===== 手机/平板全屏适配 ===== */
+/* ===== 手机/平板适配 ===== */
 @media (max-width:768px) {
-    #ce-panel {
-        top:0 !important; left:0 !important;
-        width:100vw !important; max-width:100vw !important;
-        height:100dvh !important; max-height:100dvh !important;
-        border-radius:0 !important;
-        transform:none !important;
-    }
     .ce-style-cards { display:grid !important; grid-template-columns:1fr 1fr !important; }
     .ce-color-row { flex-wrap:wrap !important; }
-    #ce-confirm-select-btn { bottom:40px !important; padding:16px 50px !important; font-size:16px !important; }
 }
 
 /* ===== 日间主题 (纯白) ===== */
@@ -253,13 +198,18 @@ function injectStyles() {
 .ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
 .ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
+/* ===== 完成选择按钮 (修复层级与位置) ===== */
 #ce-confirm-select-btn {
-    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
-    padding:14px 40px; border-radius:30px; font-size:15px; font-weight:bold; cursor:pointer;
-    z-index:2147483645; box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    position:fixed !important; bottom:40px !important; left:50% !important;
+    transform:translateX(-50%) !important;
+    padding:16px 40px !important; border-radius:30px !important;
+    font-size:16px !important; font-weight:bold !important; cursor:pointer !important;
+    z-index:2147483647 !important; /* 保证最高层级 */
+    box-shadow:0 8px 24px rgba(0,0,0,0.5) !important;
+    transition:transform .2s ease !important;
 }
-#ce-confirm-select-btn.theme-light { background:#000000; color:#ffffff; border:1px solid #000000; }
-#ce-confirm-select-btn.theme-dark { background:#ffffff; color:#000000; border:1px solid #ffffff; }
+#ce-confirm-select-btn.theme-light { background:#000000 !important; color:#ffffff !important; border:1px solid #000000 !important; }
+#ce-confirm-select-btn.theme-dark { background:#ffffff !important; color:#000000 !important; border:1px solid #ffffff !important; }
 
 #ce-render-container { position:absolute; top:-99999px; left:-99999px; width:800px; }
 
@@ -708,52 +658,113 @@ function updateSelInfo() {
     if (info) info.textContent = '已选 ' + state.selectedMesIds.size + ' 条';
 }
 
-/* ===================== 消息收集 ===================== */
+/* ===================== 核心：原生文本提取与过滤 ===================== */
 
 function collectMessages() {
     const tagsInput = document.getElementById('ce-tags-input').value.trim();
     const filterMode = document.querySelector('input[name="ce-filter"]:checked').value;
     const raw = [];
 
+    // 直接获取酒馆底层的聊天记录数组，绕开浏览器DOM解析
+    const context = typeof getContext === 'function' ? getContext() : null;
+    const chatArray = context ? context.chat : [];
+
+    const processMes = (mes) => {
+        const mesId = mes.getAttribute('mesid');
+        const nameEl = mes.querySelector('.ch_name');
+        const textEl = mes.querySelector('.mes_text');
+        if (!nameEl || !textEl) return;
+
+        const name = nameEl.innerText.trim();
+        let rawText = "";
+        let hasRaw = false;
+
+        // 如果能拿到原生 Markdown 文本，就用原生的
+        if (chatArray && chatArray[mesId] && chatArray[mesId].mes) {
+            rawText = chatArray[mesId].mes;
+            hasRaw = true;
+        } else {
+            rawText = textEl.innerText;
+        }
+
+        raw.push({ name, rawText, html: textEl.innerHTML, hasRaw });
+    };
+
     if (state.selectMethod === 'manual') {
         state.selectedMesIds.forEach(mesId => {
             const mes = document.querySelector('.mes[mesid="' + mesId + '"]');
-            if (mes) {
-                const d = extractMessageData(mes);
-                if (d) raw.push(d);
-            }
+            if (mes) processMes(mes);
         });
     } else if (state.selectMethod === 'all') {
-        document.querySelectorAll('#chat .mes').forEach(mes => {
-            const d = extractMessageData(mes);
-            if (d) raw.push(d);
-        });
+        document.querySelectorAll('#chat .mes').forEach(mes => processMes(mes));
     } else {
         const start = parseInt(document.getElementById('ce-floor-start').value) || 1;
         const end = parseInt(document.getElementById('ce-floor-end').value) || 999999;
         const allMes = document.querySelectorAll('#chat .mes');
         allMes.forEach((mes, idx) => {
             const floor = idx + 1;
-            if (floor >= start && floor <= end) {
-                const d = extractMessageData(mes);
-                if (d) raw.push(d);
-            }
+            if (floor >= start && floor <= end) processMes(mes);
         });
     }
 
     const filtered = [];
+    const tags = tagsInput.split(',').map(t => t.trim().replace(/^<\/?|\/?>$/g, '')).filter(Boolean);
+
     raw.forEach(msg => {
-        // 核心：直接对 HTML 字符串进行跨段落正则替换
-        const filteredHtml = processContent(msg.html, tagsInput, filterMode);
+        let processedText = msg.rawText;
+        let keptText = [];
+
+        if (tags.length && filterMode !== '0') {
+            tags.forEach(tag => {
+                // 在纯文本层面进行正则匹配，无视任何格式干扰
+                const re = new RegExp('<\\s*' + tag + '\\b[^>]*>([\\s\\S]*?)<\\s*\\/\\s*' + tag + '\\s*>', 'gi');
+                if (filterMode === '1') {
+                    processedText = processedText.replace(re, '');
+                } else if (filterMode === '2') {
+                    let m;
+                    while ((m = re.exec(msg.rawText)) !== null) {
+                        if (m[1].trim()) keptText.push(m[1].trim());
+                    }
+                }
+            });
+
+            if (filterMode === '2') {
+                processedText = keptText.join('\n\n');
+            }
+        }
+
+        // 如果过滤后变为空，则跳过这条消息
+        if (!processedText.trim()) return;
+
+        let finalHtml = msg.html;
+
+        // 如果进行了过滤，且有原生文本，我们需要把过滤后的文本重新转回 HTML 用于图片导出
+        if (tags.length && filterMode !== '0' && msg.hasRaw) {
+            try {
+                if (window.marked && window.marked.parse) {
+                    finalHtml = window.marked.parse(processedText);
+                } else if (window.showdown && window.showdown.Converter) {
+                    const conv = new window.showdown.Converter();
+                    finalHtml = conv.makeHtml(processedText);
+                } else {
+                    // 极简降级方案
+                    finalHtml = processedText
+                        .replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>')
+                        .replace(/\n/g, '<br>');
+                }
+            } catch(e) {
+                finalHtml = processedText.replace(/\n/g, '<br>');
+            }
+        } else if (filterMode === '2' && !msg.hasRaw) {
+             finalHtml = processedText.replace(/\n/g, '<br>');
+        }
 
         // 提取纯文本用于 TXT 导出
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = filteredHtml;
-        const filteredText = tempDiv.innerText.trim();
+        tempDiv.innerHTML = finalHtml;
+        const finalText = tempDiv.innerText.trim() || processedText;
 
-        if (filteredText) {
-            filtered.push({ name: msg.name, text: filteredText, html: filteredHtml });
-        }
+        filtered.push({ name: msg.name, text: finalText, html: finalHtml });
     });
 
     return filtered;
@@ -867,9 +878,9 @@ function createMenuButton() {
 /* ===================== 初始化 ===================== */
 
 jQuery(async function () {
-    console.log('[ChatExporter] v2.5 开始加载...');
+    console.log('[ChatExporter] v2.6 开始加载...');
     injectStyles();
     createPanel();
     createMenuButton();
-    console.log('[ChatExporter] v2.5 加载完成');
+    console.log('[ChatExporter] v2.6 加载完成');
 });
