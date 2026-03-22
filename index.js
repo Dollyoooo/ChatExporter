@@ -11,6 +11,7 @@ function loadHtml2Canvas() {
 }
 
 let isSelectionMode = false;
+
 function toggleSelectionMode() {
     isSelectionMode = !isSelectionMode;
     if (isSelectionMode) {
@@ -25,38 +26,29 @@ function toggleSelectionMode() {
     }
 }
 
-// 核心过滤函数
 function processContent(content, tagsInput, filterMode) {
     if (!tagsInput) return content;
-
-    // 将输入的字符串按逗号分割，去除空格，过滤掉空值
     const tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
     if (tags.length === 0) return content;
 
     let result = content;
 
     if (filterMode === '1') {
-        // 模式1：去除标签及其内部文字
         tags.forEach(tag => {
-            // 正则匹配 <tag>任意内容</tag>，忽略大小写，全局匹配
             const regex = new RegExp(`<${tag}>[\\s\\S]*?<\\/${tag}>`, 'gi');
             result = result.replace(regex, '');
         });
     } else if (filterMode === '2') {
-        // 模式2：仅导出标签内的文字
         let keptText = [];
         tags.forEach(tag => {
             const regex = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'gi');
             let match;
             while ((match = regex.exec(content)) !== null) {
-                // match[1] 是捕获组，即标签内部的纯内容
                 keptText.push(match[1]);
             }
         });
-        // 将提取出的多个标签内容合并
         result = keptText.join('<br><br>');
     }
-
     return result;
 }
 
@@ -68,14 +60,12 @@ function showExportMenu() {
         return;
     }
 
-    // 1. 询问过滤设置
     const tagsInput = prompt("请输入需要处理的标签名（如 thinking,note，多个用逗号分隔）。\n如果不处理，请直接点击确定或取消留空：");
     let filterMode = null;
     if (tagsInput) {
         filterMode = prompt("请选择标签处理模式：\n1 = 去除标签及内部文字\n2 = 仅导出标签内部文字");
     }
 
-    // 2. 提取并清洗消息
     const selectedMessages = [];
     selectedElements.each(function() {
         const mesElement = $(this).closest('.mes');
@@ -84,11 +74,9 @@ function showExportMenu() {
         let rawText = mesElement.find('.mes_text').text();
         let rawHtml = mesElement.find('.mes_text').html();
 
-        // 对文本和HTML都进行清洗
         let processedText = processContent(rawText, tagsInput, filterMode);
         let processedHtml = processContent(rawHtml, tagsInput, filterMode);
 
-        // 如果清洗后内容为空（比如选择了仅保留，但该段落没有标签），则跳过该条消息
         if (processedText.trim() !== "") {
             selectedMessages.push({ name, text: processedText, html: processedHtml });
         }
@@ -100,7 +88,6 @@ function showExportMenu() {
         return;
     }
 
-    // 3. 询问导出格式
     const exportType = prompt("请输入导出格式：\n输入 'txt' 导出文本\n输入 'img' 导出图片");
 
     if (exportType === 'txt') {
@@ -120,7 +107,6 @@ function showExportMenu() {
 function exportToTxt(messages) {
     let content = "";
     messages.forEach(msg => {
-        // 将 HTML 的 <br> 转换回换行符，以防过滤模式2产生了 <br>
         let cleanText = msg.text.replace(/<br>/gi, '\n');
         content += `${msg.name}: \n${cleanText}\n\n`;
     });
