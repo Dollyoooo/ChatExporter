@@ -1,9 +1,0 @@
-{
-    "name": "Chat Exporter",
-    "display_name": "聊天记录导出器",
-    "description": "多选聊天记录并导出为TXT或图片，支持背景切换与特定标签过滤。",
-    "version": "1.1.0",
-    "author": "Dollyoooo",
-    "js": ["index.js"],
-    "css": ["style.css"]
-}
