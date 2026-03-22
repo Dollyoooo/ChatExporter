@@ -143,7 +143,14 @@ function cleanup() {
 }
 
 jQuery(async () => {
-    const exportBtn = $(`<div id="chat-export-btn" class="fa-solid fa-camera extensionsMenuExtensionButton" title="导出聊天记录"></div>`);
+    // 为了防止重复加载，先移除可能存在的旧按钮
+    $('#chat-export-btn').remove();
+
+    // 创建一个纯净的按钮，不再使用酒馆菜单的类名
+    const exportBtn = $(`<div id="chat-export-btn" class="fa-solid fa-camera" title="点击导出聊天记录"></div>`);
     exportBtn.on('click', toggleSelectionMode);
-    $('#extensionsMenu').prepend(exportBtn);
+
+    // 直接将按钮挂载到网页的最外层主体(body)上，避免被其他菜单遮挡
+    $('body').append(exportBtn);
 });
+
