@@ -249,41 +249,23 @@ function injectStyles() {
 .ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
 .ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
-/* ===== 独立的悬浮选择按钮 (绝对防遮盖与分离) ===== */
+/* ===== 顶端悬浮操作栏 (彻底避开底部键盘与输入框遮挡，居中并排) ===== */
+#ce-selection-bar {
+    position:fixed !important; top:80px !important; left:50% !important;
+    transform:translateX(-50%) !important; z-index:2147483647 !important;
+    display:flex !important; gap:16px !important;
+    background:rgba(0,0,0,0.7) !important; padding:12px 20px !important;
+    border-radius:30px !important; box-shadow:0 6px 16px rgba(0,0,0,0.4) !important;
+    width:max-content !important; backdrop-filter:blur(5px) !important;
+}
 .ce-float-btn {
-    position:fixed !important;
-    bottom:40px !important;
-    z-index:2147483647 !important;
-    padding:14px 28px !important;
-    border-radius:30px !important;
-    font-size:16px !important;
-    font-weight:bold !important;
-    cursor:pointer !important;
-    border:none !important;
-    outline:none !important;
-    box-shadow:0 6px 16px rgba(0,0,0,0.4) !important;
-    transition:transform 0.2s, opacity 0.2s !important;
+    padding:10px 24px !important; border-radius:20px !important;
+    font-size:15px !important; font-weight:bold !important; cursor:pointer !important;
+    border:none !important; outline:none !important; transition:all 0.2s !important;
 }
-.ce-float-btn:active { transform:scale(0.95) !important; opacity:0.8 !important; }
-#ce-float-cancel-btn {
-    left:30px !important;
-    background:#e53935 !important; /* 红色退出按钮 */
-    color:#ffffff !important;
-}
-#ce-float-confirm-btn {
-    right:30px !important;
-    background:#4caf50 !important; /* 绿色确认按钮 */
-    color:#ffffff !important;
-}
-@media (max-width:768px) {
-    .ce-float-btn {
-        bottom:20px !important; /* 手机端固定像素位置，杜绝vh问题 */
-        padding:12px 20px !important;
-        font-size:15px !important;
-    }
-    #ce-float-cancel-btn { left:10px !important; }
-    #ce-float-confirm-btn { right:10px !important; }
-}
+.ce-float-btn:active { transform:scale(0.95) !important; }
+#ce-float-cancel-btn { background:#e53935 !important; color:#ffffff !important; }
+#ce-float-confirm-btn { background:#4caf50 !important; color:#ffffff !important; }
 
 /* ===== 渲染容器基础 ===== */
 #ce-render-container { position:absolute; top:-99999px; left:-99999px; }
@@ -550,10 +532,12 @@ function setupPanelEvents() {
         enterSelectionMode();
     });
 
-    // 主面板新增的取消选择按钮
+    // 主面板新增的取消选择按钮 (强制清空数据、拔除DOM残留，并提供弹窗反馈)
     document.getElementById('ce-cancel-sel-btn').addEventListener('click', function () {
         state.selectedMesIds.clear();
+        document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
         updateSelInfo();
+        alert('已成功清空所有勾选的消息！');
     });
 
     document.querySelectorAll('input[name="ce-format"]').forEach(r => {
@@ -883,9 +867,11 @@ function enterSelectionMode() {
         mes.insertBefore(cb, mes.firstChild);
     });
 
-    // 每次进入模式强制销毁旧按钮，重新生成独立按钮
-    if (document.getElementById('ce-float-cancel-btn')) document.getElementById('ce-float-cancel-btn').remove();
-    if (document.getElementById('ce-float-confirm-btn')) document.getElementById('ce-float-confirm-btn').remove();
+    // 彻底销毁旧栏，重新在屏幕上方生成居中包裹的独立按钮
+    if (document.getElementById('ce-selection-bar')) document.getElementById('ce-selection-bar').remove();
+
+    const bar = document.createElement('div');
+    bar.id = 'ce-selection-bar';
 
     const cancelBtn = document.createElement('button');
     cancelBtn.id = 'ce-float-cancel-btn';
@@ -899,17 +885,17 @@ function enterSelectionMode() {
     confirmBtn.textContent = '完成选择';
     confirmBtn.addEventListener('click', () => exitSelectionMode(false));
 
-    document.body.appendChild(cancelBtn);
-    document.body.appendChild(confirmBtn);
+    bar.appendChild(cancelBtn);
+    bar.appendChild(confirmBtn);
+    document.body.appendChild(bar);
 }
 
 function exitSelectionMode(isCancel = false) {
     state.selectionMode = false;
     document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
 
-    // 退出时彻底销毁按钮节点，不留残影
-    if (document.getElementById('ce-float-cancel-btn')) document.getElementById('ce-float-cancel-btn').remove();
-    if (document.getElementById('ce-float-confirm-btn')) document.getElementById('ce-float-confirm-btn').remove();
+    // 退出时彻底销毁顶部的整个包裹栏和按钮节点，绝对不留残影
+    if (document.getElementById('ce-selection-bar')) document.getElementById('ce-selection-bar').remove();
 
     if (isCancel) {
         state.selectedMesIds.clear();
