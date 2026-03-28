@@ -16,7 +16,7 @@ const state = {
     selectMethod: 'manual',
     selectionMode: false,
     theme: 'light',
-    compressLevel: '1.0' // 图片压缩等级 (默认不压缩)
+    compressLevel: '1.0'
 };
 
 const PRESET_COLORS = [
@@ -88,7 +88,7 @@ function injectStyles() {
     border-radius:12px;
     z-index:2147483641; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
-    font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
+    font-family:-apple-system,'Segoe UI',sans-serif;
     font-size:13px;
     opacity:0; pointer-events:none;
     transition:opacity .2s ease;
@@ -107,7 +107,7 @@ function injectStyles() {
     border-radius:12px;
     z-index:2147483646; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
-    font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
+    font-family:-apple-system,'Segoe UI',sans-serif;
     opacity:0; pointer-events:none;
     transition:opacity .2s ease;
     display: none;
@@ -265,7 +265,6 @@ function injectStyles() {
     border:none !important; outline:none !important; transition:all 0.2s !important;
     box-shadow:0 4px 12px rgba(0,0,0,0.3) !important; pointer-events:auto !important;
 }
-
 .ce-float-btn:active { transform:scale(0.95) !important; }
 #ce-float-cancel-btn { background:#e53935 !important; color:#ffffff !important; }
 #ce-float-confirm-btn { background:#4caf50 !important; color:#ffffff !important; }
@@ -274,27 +273,27 @@ function injectStyles() {
 #ce-render-container { position:absolute; top:-99999px; left:-99999px; }
 
 /* ===== 电脑版排版 (默认 800px) ===== */
-.ce-export-default { padding:28px; line-height:1.9; font-size:15px; font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; }
+.ce-export-default { padding:28px; line-height:1.9; font-size:15px; font-family:-apple-system,'Segoe UI',sans-serif; }
 .ce-export-default .ce-msg { margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid rgba(128,128,128,.3); }
 .ce-export-default .ce-msg:last-child { border-bottom:none; margin-bottom:0; }
 .ce-export-default .ce-msg-name { font-weight:bold; margin-bottom:6px; font-size:14px; }
 
-.ce-export-white-card { padding:24px; background:#f0f2f5; line-height:1.85; font-size:15px; font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; color:#333; }
+.ce-export-white-card { padding:24px; background:#f0f2f5; line-height:1.85; font-size:15px; font-family:-apple-system,'Segoe UI',sans-serif; color:#333; }
 .ce-export-white-card .ce-msg { background:#fff; border-radius:12px; padding:18px 22px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
 .ce-export-white-card .ce-msg:last-child { margin-bottom:0; }
 .ce-export-white-card .ce-msg-name { font-weight:bold; color:#1a73e8; margin-bottom:8px; font-size:13px; }
 
-.ce-export-dark-minimal { padding:28px; background:#1a1a2e; line-height:1.85; font-size:15px; font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; color:#e2e2e2; }
+.ce-export-dark-minimal { padding:28px; background:#1a1a2e; line-height:1.85; font-size:15px; font-family:-apple-system,'Segoe UI',sans-serif; color:#e2e2e2; }
 .ce-export-dark-minimal .ce-msg { padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,.1); }
 .ce-export-dark-minimal .ce-msg:last-child { border-bottom:none; margin-bottom:0; }
 .ce-export-dark-minimal .ce-msg-name { font-weight:bold; color:#8b92ff; margin-bottom:6px; font-size:13px; }
 
-.ce-export-warm-note { padding:30px 34px; background:#faf6ee; line-height:2; font-size:15px; font-family:Georgia,'Noto Serif SC','Source Han Serif SC',serif; color:#4a3f2f; }
+.ce-export-warm-note { padding:30px 34px; background:#faf6ee; line-height:2; font-size:15px; font-family:Georgia,serif; color:#4a3f2f; }
 .ce-export-warm-note .ce-msg { padding-left:16px; margin-bottom:18px; border-left:3px solid #c9a96e; }
 .ce-export-warm-note .ce-msg:last-child { margin-bottom:0; }
 .ce-export-warm-note .ce-msg-name { font-weight:bold; color:#8b6c2a; margin-bottom:6px; font-size:13px; }
 
-/* ===== 手机版排版优化 (覆盖基础样式) ===== */
+/* ===== 手机版排版优化 ===== */
 .ce-layout-mobile { font-size:16px !important; }
 .ce-layout-mobile.ce-export-default { padding:20px; }
 .ce-layout-mobile.ce-export-white-card { padding:16px; }
@@ -462,7 +461,6 @@ function createPanel() {
         </div>
     </div>
 
-    <!-- 独立的搜索消息弹窗 -->
     <div id="ce-search-overlay"></div>
     <div id="ce-search-panel" class="theme-light">
         <div class="ce-search-header">
@@ -542,7 +540,6 @@ function setupPanelEvents() {
         enterSelectionMode();
     });
 
-    // 主面板新增的取消选择按钮 (强制清空数据、拔除DOM残留，并提供弹窗反馈)
     document.getElementById('ce-cancel-sel-btn').addEventListener('click', function () {
         state.selectedMesIds.clear();
         document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
@@ -716,6 +713,7 @@ function setupSearchPanelEvents() {
                     matchCount++;
                     const floor = idx + 1;
 
+                    // 修复HTML注入Bug的绝杀：必须用 < 和 >，不能写成 < 和 >
                     const safeText = text.replace(/</g, '<').replace(/>/g, '>');
                     const regex = new RegExp('(' + escapeRegExp(keyword) + ')', 'gi');
                     const highlightedText = safeText.replace(regex, '<span class="ce-search-highlight">$1</span>');
@@ -888,7 +886,6 @@ function enterSelectionMode() {
         mes.insertBefore(cb, mes.firstChild);
     });
 
-    // 彻底销毁旧栏，重新在屏幕上方生成居中包裹的独立按钮
     if (document.getElementById('ce-selection-bar')) document.getElementById('ce-selection-bar').remove();
 
     const bar = document.createElement('div');
@@ -915,7 +912,6 @@ function exitSelectionMode(isCancel = false) {
     state.selectionMode = false;
     document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
 
-    // 退出时彻底销毁顶部的整个包裹栏和按钮节点，绝对不留残影
     if (document.getElementById('ce-selection-bar')) document.getElementById('ce-selection-bar').remove();
 
     if (isCancel) {
@@ -956,10 +952,22 @@ function collectMessages() {
             name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
         }
 
-        // 直接从聊天框抓取肉眼可见的时间文本，完美保留 de marzo de 等原版格式
+        // 修复日期丢失Bug：即使屏幕上隐藏了时间，也能从底层数据库提取，并格式化为你系统的绝佳母语格式
         let dateStr = "";
-        const dateEl = mes.querySelector('.mes_date');
-        if (dateEl) dateStr = dateEl.innerText.trim();
+        if (chatArray && chatArray[mesId] && chatArray[mesId].send_date) {
+            let d = new Date(chatArray[mesId].send_date);
+            if (!isNaN(d.getTime())) {
+                const lang = navigator.language || 'es-ES'; // 自动适配浏览器语言，比如输出 21 de marzo de 2026 7:58
+                dateStr = d.toLocaleString(lang, {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                }).replace(',', '');
+            }
+        }
+        if (!dateStr) {
+            const dateEl = mes.querySelector('.mes_date') || mes.querySelector('.timestamp');
+            if (dateEl) dateStr = dateEl.innerText.trim();
+        }
 
         let rawText = "";
         let hasRaw = false;
