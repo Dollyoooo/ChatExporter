@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
 
 // ================================================================
-//  Chat Exporter v2.8 — 聊天记录导出器
+//  Chat Exporter v2.8 — 聊天记录导出器 (公开强化版)
 // ================================================================
 
 const state = {
@@ -100,9 +100,9 @@ function injectStyles() {
 
 /* ===== 搜索弹窗 ===== */
 #ce-search-panel {
-    position:fixed; top:50%; left:50%;
-    transform:translate(-50%, -50%);
-    width:440px; max-width:92vw; height:60vh; max-height:800px;
+    position:fixed; top:10vh; left:50%;
+    transform:translateX(-50%);
+    width:440px; max-width:92vw; height:auto; max-height:80vh;
     border-radius:12px;
     z-index:2147483646; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
@@ -219,7 +219,7 @@ function injectStyles() {
 
 /* ===== 自定义圆形复选框 ===== */
 .ce-checkbox {
-    appearance:none; -webkit-appearance:none;
+    appearance:none !important; -webkit-appearance:none !important;
     position:absolute !important; left:10px !important; top:12px !important;
     width:24px !important; height:24px !important;
     border-radius:50% !important;
@@ -227,8 +227,10 @@ function injectStyles() {
     cursor:pointer !important; margin:0 !important;
     z-index:2147483635 !important;
     background:transparent !important;
+    background-image:none !important; /* 修复重叠 */
     transition:all .2s;
 }
+.ce-checkbox::before { display: none !important; content: none !important; } /* 修复重叠 */
 .ce-checkbox.theme-light:checked { background:#000000 !important; border-color:#000000 !important; }
 .ce-checkbox.theme-dark:checked { background:#ffffff !important; border-color:#ffffff !important; }
 .ce-checkbox:checked::after {
@@ -308,8 +310,18 @@ function createPanel() {
                 <span>快速跳转</span>
                 <input type="number" class="ce-number-input" id="ce-jump-input" placeholder="楼层" min="1">
                 <button class="ce-btn" id="ce-jump-btn">跳转</button>
+                <button class="ce-btn" id="ce-jump-top-btn">回顶</button>
+                <button class="ce-btn" id="ce-jump-bottom-btn">回底</button>
                 <div style="flex:1"></div>
                 <button class="ce-btn" id="ce-open-search-btn">搜索消息</button>
+            </div>
+            <div class="ce-section" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span>消息隐藏与显示</span>
+                <input type="number" class="ce-number-input" id="ce-hide-start" placeholder="起始" min="1">
+                <span>至</span>
+                <input type="number" class="ce-number-input" id="ce-hide-end" placeholder="结束" min="1">
+                <button class="ce-btn" id="ce-hide-btn">隐藏</button>
+                <button class="ce-btn" id="ce-show-btn">显示</button>
             </div>
             <div class="ce-section">
                 <div class="ce-section-title">消息选择</div>
@@ -489,6 +501,38 @@ function setupPanelEvents() {
         } else {
             alert('楼层不存在，当前最大楼层为 ' + allMes.length);
         }
+    });
+
+    document.getElementById('ce-jump-top-btn').addEventListener('click', function () {
+        const chat = document.getElementById('chat');
+        if (chat) chat.scrollTo({ top: 0, behavior: 'instant' });
+        closePanel();
+    });
+
+    document.getElementById('ce-jump-bottom-btn').addEventListener('click', function () {
+        const chat = document.getElementById('chat');
+        if (chat) chat.scrollTo({ top: chat.scrollHeight, behavior: 'instant' });
+        closePanel();
+    });
+
+    document.getElementById('ce-hide-btn').addEventListener('click', function () {
+        const start = parseInt(document.getElementById('ce-hide-start').value);
+        const end = parseInt(document.getElementById('ce-hide-end').value);
+        if (!start || !end || start > end) return alert('请输入有效的楼层范围');
+        const allMes = document.querySelectorAll('#chat .mes');
+        allMes.forEach((mes, idx) => {
+            if (idx + 1 >= start && idx + 1 <= end) mes.style.display = 'none';
+        });
+    });
+
+    document.getElementById('ce-show-btn').addEventListener('click', function () {
+        const start = parseInt(document.getElementById('ce-hide-start').value);
+        const end = parseInt(document.getElementById('ce-hide-end').value);
+        if (!start || !end || start > end) return alert('请输入有效的楼层范围');
+        const allMes = document.querySelectorAll('#chat .mes');
+        allMes.forEach((mes, idx) => {
+            if (idx + 1 >= start && idx + 1 <= end) mes.style.display = '';
+        });
     });
 
     document.querySelectorAll('input[name="ce-sel-method"]').forEach(r => {
@@ -957,7 +1001,7 @@ function collectMessages() {
 
 /* ===================== 导出 ===================== */
 
-function doExport() {
+async function doExport() {
     try {
         const messages = collectMessages();
         if (!messages.length) {
@@ -967,8 +1011,13 @@ function doExport() {
         if (state.format === 'txt') {
             exportToTxt(messages);
         } else {
-            exportToImage(messages);
+            await exportToImage(messages);
         }
+
+        // 导出完成后重置多选状态
+        state.selectedMesIds.clear();
+        updateSelInfo();
+
     } catch (e) {
         console.error('[ChatExporter] 导出出错:', e);
         alert('导出时发生错误: ' + e.message);
