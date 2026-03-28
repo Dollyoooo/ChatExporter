@@ -71,9 +71,13 @@ function injectStyles() {
     position:fixed; top:0; left:0; width:100vw; height:100vh;
     background:rgba(0,0,0,0.7); z-index:2147483640;
     opacity:0; pointer-events:none; transition:opacity .2s ease;
+    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
 }
 #ce-search-overlay { z-index:2147483645; }
-#ce-overlay.open, #ce-search-overlay.open { opacity:1; pointer-events:auto; }
+#ce-overlay.open, #ce-search-overlay.open {
+    opacity:1; pointer-events:auto;
+    display: block; /* 修复：打开时显示 */
+}
 
 /* ===== 面板基础 ===== */
 #ce-panel {
@@ -87,8 +91,12 @@ function injectStyles() {
     font-size:13px;
     opacity:0; pointer-events:none;
     transition:opacity .2s ease;
+    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
 }
-#ce-panel.open { opacity:1; pointer-events:auto; }
+#ce-panel.open {
+    opacity:1; pointer-events:auto;
+    display: flex; /* 修复：打开时显示 */
+}
 
 /* ===== 搜索弹窗 ===== */
 #ce-search-panel {
@@ -101,19 +109,12 @@ function injectStyles() {
     font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
     opacity:0; pointer-events:none;
     transition:opacity .2s ease;
+    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
 }
-#ce-search-panel.open { opacity:1; pointer-events:auto; }
-.ce-search-header { display:flex; align-items:center; gap:10px; padding:16px 20px; padding-right:45px; flex-shrink:0; position:relative; }
-.ce-search-input { flex:1; padding:10px 14px; border-radius:20px; outline:none; font-size:14px; border:none; }
-.ce-search-count { font-size:12px; white-space:nowrap; font-weight:bold; }
-.ce-search-close { position:absolute; right:15px; top:50%; transform:translateY(-50%); font-size:26px; cursor:pointer; line-height:1; font-weight:300; transition:all .2s; user-select:none; }
-.ce-search-body { flex:1; overflow-y:auto; padding:10px 20px 20px; -webkit-overflow-scrolling:touch; }
-.ce-search-body::-webkit-scrollbar { width:6px; }
-.ce-search-body::-webkit-scrollbar-track { background:transparent; }
-.ce-search-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
-.ce-search-item { padding:14px; margin-bottom:10px; border-radius:10px; cursor:pointer; transition:background .2s; display:flex; flex-direction:column; gap:6px; }
-.ce-search-item-header { display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; }
-.ce-search-item-text { font-size:13px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
+#ce-search-panel.open {
+    opacity:1; pointer-events:auto;
+    display: flex; /* 修复：打开时显示 */
+}
 
 /* ===== 手机/平板适配 ===== */
 @media (max-width:768px) {
@@ -639,11 +640,20 @@ function setupSearchPanelEvents() {
 
         allMes.forEach((mes, idx) => {
             const textEl = mes.querySelector('.mes_text');
-            if (!textEl) return; // 搜索时同样不能跳过用户消息
+            if (!textEl) return; // 只要有聊天内容，就绝对不跳过！
 
-            const nameEl = mes.querySelector('.ch_name');
-            // 修复：如果没有名字元素，就尝试获取属性，或者默认显示 User
-            const name = nameEl ? nameEl.innerText : (mes.getAttribute('ch_name') || "User");
+            // 修复：优先从酒馆底层数据获取名字，没有DOM元素也不怕漏掉用户消息
+            let name = "User";
+            const context = typeof getContext === 'function' ? getContext() : null;
+            const chatArray = context ? context.chat : [];
+            const mesId = mes.getAttribute('mesid'); // 从mes元素获取mesid
+            if (chatArray && chatArray[mesId] && chatArray[mesId].name) {
+                name = chatArray[mesId].name;
+            } else {
+                const nameEl = mes.querySelector('.ch_name');
+                name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
+            }
+
             const text = textEl.innerText; // 获取纯文本，去掉HTML标签
 
             if (name.toLowerCase().includes(keyword) || text.toLowerCase().includes(keyword)) {
@@ -1075,5 +1085,3 @@ jQuery(async function () {
     createMenuButton();
     console.log('[ChatExporter] v2.8 加载完成');
 });
-
-一键保存并刷新一下页面，现在在“快速跳转”旁边多了一个**“搜索消息”**的按钮，点开试试看吧！如果不符合你心里最完美的标准，随时拍拍我哦～🥰
