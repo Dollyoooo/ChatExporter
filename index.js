@@ -1,5 +1,5 @@
 import { getContext } from '../../../extensions.js';
-import { executeSlashCommands } from '../../../slash-commands/SlashCommandParser.js'; // 核心：引入酒馆原生斜杠命令处理器
+import { executeSlashCommands } from '../../../slash-commands/SlashCommandParser.js';
 
 // ================================================================
 //  Chat Exporter v2.9 — 聊天记录导出器
@@ -75,21 +75,29 @@ function injectStyles() {
     display: none;
 }
 #ce-search-overlay { z-index:2147483645; }
-#ce-overlay.open, #ce-search-overlay.open { opacity:1; pointer-events:auto; display: block; }
+#ce-overlay.open, #ce-search-overlay.open {
+    opacity:1; pointer-events:auto;
+    display: block;
+}
 
 /* ===== 面板基础 ===== */
 #ce-panel {
     position:fixed; top:5vh; left:50%;
     transform:translateX(-50%);
-    width:440px; max-width:92vw; height:auto; max-height:90vh;
+    width:480px; max-width:92vw; height:auto; max-height:90vh;
     border-radius:12px;
     z-index:2147483641; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
     font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
-    font-size:13px; opacity:0; pointer-events:none;
-    transition:opacity .2s ease; display: none;
+    font-size:13px;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+    display: none;
 }
-#ce-panel.open { opacity:1; pointer-events:auto; display: flex; }
+#ce-panel.open {
+    opacity:1; pointer-events:auto;
+    display: flex;
+}
 
 /* ===== 搜索弹窗 ===== */
 #ce-search-panel {
@@ -100,29 +108,33 @@ function injectStyles() {
     z-index:2147483646; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
     font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
-    opacity:0; pointer-events:none; transition:opacity .2s ease; display: none;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+    display: none;
+    box-sizing: border-box;
 }
-#ce-search-panel.open { opacity:1; pointer-events:auto; display: flex; }
+#ce-search-panel.open {
+    opacity:1; pointer-events:auto;
+    display: flex;
+}
 
-/* ===== 手机/平板适配增强 ===== */
+/* ===== 手机/平板深度适配 ===== */
 @media (max-width:768px) {
     .ce-style-cards { display:grid !important; grid-template-columns:1fr 1fr !important; }
     .ce-color-row { flex-wrap:wrap !important; }
-    /* 修复搜索框手机端显示一半的问题 */
     #ce-search-panel {
-        width: 95vw !important;
-        max-width: 95vw !important;
+        width: 90vw !important;
+        max-width: 90vw !important;
         height: 75vh !important;
-        left: 50% !important;
-        top: 50% !important;
-        transform: translate(-50%, -50%) !important;
     }
+    .ce-search-header { flex-wrap:wrap; gap:10px; }
+    .ce-search-input { width: 100%; box-sizing: border-box; }
 }
 
-/* ===== 日间主题 (纯白) ===== */
+/* ===== 日间主题 ===== */
 #ce-panel.theme-light, #ce-search-panel.theme-light { background:#ffffff; color:#000000; border:1px solid #cccccc; }
 #ce-panel.theme-light .ce-header, #ce-search-panel.theme-light .ce-search-header { background:#ffffff; border-bottom:1px solid #eeeeee; }
-#ce-panel.theme-light .ce-close { color:#000000; }
+#ce-panel.theme-light .ce-close, #ce-search-panel.theme-light .ce-search-close { color:#000000; }
 #ce-panel.theme-light .ce-close:hover { background:#f0f0f0; }
 #ce-panel.theme-light .ce-theme-btn { background:#f0f0f0; color:#000000; border:1px solid #cccccc; }
 #ce-panel.theme-light .ce-section { background:#ffffff; border:1px solid #eeeeee; }
@@ -139,19 +151,17 @@ function injectStyles() {
 #ce-panel.theme-light .ce-target-btn, #ce-panel.theme-light .ce-picker-tab { background:#f0f0f0; border:1px solid #cccccc; color:#000000; }
 #ce-panel.theme-light .ce-target-btn.active, #ce-panel.theme-light .ce-picker-tab.active { background:#000000; color:#ffffff; }
 #ce-panel.theme-light .ce-export-row { background:#ffffff; border-top:1px solid #eeeeee; }
-/* 搜索专属 - 日间 */
-#ce-search-panel.theme-light .ce-search-input { background:#f0f2f5; color:#000000; border:1px solid #ccc; }
-#ce-search-panel.theme-light .ce-search-close { color:#000000; opacity:0.6; }
-#ce-search-panel.theme-light .ce-search-close:hover { opacity:1; }
+
+#ce-search-panel.theme-light .ce-search-input { background:#f0f2f5; color:#000000; border:1px solid #cccccc; }
 #ce-search-panel.theme-light .ce-search-item { background:#f9f9f9; border:1px solid #eeeeee; }
 #ce-search-panel.theme-light .ce-search-item-header { color:#555; }
 #ce-search-panel.theme-light .ce-search-item-text { color:#222; }
 #ce-search-panel.theme-light .ce-search-item:hover { background:#f0f2f5; border-color:#ccc; }
 
-/* ===== 夜间主题 (纯黑) ===== */
+/* ===== 夜间主题 ===== */
 #ce-panel.theme-dark, #ce-search-panel.theme-dark { background:#000000; color:#ffffff; border:1px solid #333333; }
 #ce-panel.theme-dark .ce-header, #ce-search-panel.theme-dark .ce-search-header { background:#000000; border-bottom:1px solid #333333; }
-#ce-panel.theme-dark .ce-close { color:#ffffff; }
+#ce-panel.theme-dark .ce-close, #ce-search-panel.theme-dark .ce-search-close { color:#ffffff; }
 #ce-panel.theme-dark .ce-close:hover { background:#222222; }
 #ce-panel.theme-dark .ce-theme-btn { background:#222222; color:#ffffff; border:1px solid #444444; }
 #ce-panel.theme-dark .ce-section { background:#000000; border:1px solid #222222; }
@@ -168,10 +178,8 @@ function injectStyles() {
 #ce-panel.theme-dark .ce-target-btn, #ce-panel.theme-dark .ce-picker-tab { background:#222222; border:1px solid #444444; color:#ffffff; }
 #ce-panel.theme-dark .ce-target-btn.active, #ce-panel.theme-dark .ce-picker-tab.active { background:#ffffff; color:#000000; }
 #ce-panel.theme-dark .ce-export-row { background:#000000; border-top:1px solid #333333; }
-/* 搜索专属 - 夜间 */
-#ce-search-panel.theme-dark .ce-search-input { background:#1a1a1a; color:#ffffff; border:1px solid #333; }
-#ce-search-panel.theme-dark .ce-search-close { color:#ffffff; opacity:0.6; }
-#ce-search-panel.theme-dark .ce-search-close:hover { opacity:1; }
+
+#ce-search-panel.theme-dark .ce-search-input { background:#1a1a1a; color:#ffffff; border:1px solid #333333; }
 #ce-search-panel.theme-dark .ce-search-item { background:#111111; border:1px solid #333333; }
 #ce-search-panel.theme-dark .ce-search-item-header { color:#aaa; }
 #ce-search-panel.theme-dark .ce-search-item-text { color:#eee; }
@@ -179,18 +187,11 @@ function injectStyles() {
 
 /* ===== 通用组件 ===== */
 .ce-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; font-size:15px; font-weight:bold; flex-shrink:0; }
-.ce-search-header { display:flex; gap:10px; align-items:center; padding:16px 20px; flex-shrink:0; }
-.ce-search-input { flex:1; padding:8px 12px; border-radius:6px; outline:none; font-size:14px; }
-.ce-search-count { font-size:12px; white-space:nowrap; }
-.ce-search-close { cursor:pointer; font-size:24px; font-weight:bold; padding:0 5px; }
-.ce-search-body { flex:1; overflow-y:auto; padding:10px; }
-.ce-search-item { padding:12px; margin-bottom:10px; border-radius:8px; cursor:pointer; transition:background .2s; }
-.ce-search-item-header { font-size:12px; font-weight:bold; margin-bottom:6px; }
-.ce-search-item-text { font-size:13px; line-height:1.5; word-break:break-all; }
-
+.ce-search-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; font-size:14px; font-weight:bold; flex-shrink:0; }
 .ce-theme-btn { padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; }
-.ce-close { cursor:pointer; font-size:20px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
+.ce-close, .ce-search-close { cursor:pointer; font-size:22px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
 .ce-body { padding:16px 20px; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; }
+.ce-search-body { padding:16px 20px; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:10px; }
 .ce-body::-webkit-scrollbar, .ce-search-body::-webkit-scrollbar { width:6px; }
 .ce-body::-webkit-scrollbar-track, .ce-search-body::-webkit-scrollbar-track { background:transparent; }
 .ce-body::-webkit-scrollbar-thumb, .ce-search-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
@@ -198,9 +199,9 @@ function injectStyles() {
 .ce-section-title { font-size:13px; font-weight:bold; margin-bottom:12px; }
 .ce-radio-group { display:flex; gap:14px; flex-wrap:wrap; }
 .ce-radio-group label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; }
-.ce-input { width:100%; padding:10px 12px; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box; }
-.ce-number-input { width:70px; padding:8px; border-radius:6px; font-size:13px; outline:none; text-align:center; box-sizing:border-box; }
-.ce-btn { padding:10px 16px; border-radius:6px; cursor:pointer; font-size:13px; transition:all .2s; user-select:none; font-weight:bold; display:flex; align-items:center; justify-content:center; }
+.ce-input, .ce-search-input { padding:10px 12px; border-radius:6px; font-size:13px; outline:none; }
+.ce-number-input { width:80px; padding:8px; border-radius:6px; font-size:13px; outline:none; text-align:center; box-sizing:border-box; }
+.ce-btn { padding:10px 16px; border-radius:6px; cursor:pointer; font-size:13px; transition:all .2s; user-select:none; font-weight:bold; text-align:center; }
 .ce-style-cards { display:flex; gap:10px; flex-wrap:wrap; }
 .ce-style-card { flex:1; min-width:85px; padding:12px 8px; border-radius:8px; text-align:center; cursor:pointer; transition:all .2s; }
 .ce-style-preview { width:100%; height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:16px; margin-bottom:8px; border:1px solid #ccc; }
@@ -222,6 +223,11 @@ function injectStyles() {
 .ce-slider-row input[type="range"] { flex:1; height:6px; }
 .ce-slider-val { font-size:12px; font-family:monospace; width:30px; text-align:right; }
 .ce-export-row { padding:16px 20px; display:flex; justify-content:center; flex-shrink:0; }
+
+/* 搜索结果项 */
+.ce-search-item { padding:12px; border-radius:6px; cursor:pointer; transition:all .2s; }
+.ce-search-item-header { font-size:12px; margin-bottom:6px; font-weight:bold; }
+.ce-search-item-text { font-size:13px; line-height:1.5; word-break:break-all; }
 
 /* ===== 自定义圆形复选框 ===== */
 .ce-checkbox {
@@ -261,7 +267,7 @@ function injectStyles() {
 /* ===== 渲染容器基础 ===== */
 #ce-render-container { position:absolute; top:-99999px; left:-99999px; }
 
-/* ===== 电脑版排版 (默认 800px) ===== */
+/* ===== 电脑版排版 ===== */
 .ce-export-default { padding:28px; line-height:1.9; font-size:15px; font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif; }
 .ce-export-default .ce-msg { margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid rgba(128,128,128,.3); }
 .ce-export-default .ce-msg:last-child { border-bottom:none; margin-bottom:0; }
@@ -311,26 +317,27 @@ function createPanel() {
         </div>
         <div class="ce-body">
             <div class="ce-section" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span>快速跳转</span>
+                <span style="font-weight:bold;">快速导航</span>
+                <button class="ce-btn" id="ce-scroll-top-btn" style="padding:8px 12px;">回顶</button>
+                <button class="ce-btn" id="ce-scroll-bottom-btn" style="padding:8px 12px;">回底</button>
+                <div style="width:1px;height:20px;background:#ccc;margin:0 4px;"></div>
                 <input type="number" class="ce-number-input" id="ce-jump-input" placeholder="楼层" min="1" style="width:60px;">
-                <button class="ce-btn" id="ce-jump-btn" style="padding:10px;">跳转</button>
-                <button class="ce-btn" id="ce-top-btn" title="回到顶部" style="padding:10px;">⬆️</button>
-                <button class="ce-btn" id="ce-bottom-btn" title="回到底部" style="padding:10px;">⬇️</button>
+                <button class="ce-btn" id="ce-jump-btn" style="padding:8px 12px;">跳转</button>
                 <div style="flex:1"></div>
-                <button class="ce-btn" id="ce-open-search-btn">🔍 搜索消息</button>
+                <button class="ce-btn ce-btn-primary" id="ce-open-search-btn" style="padding:8px 14px;">搜索消息</button>
             </div>
 
             <div class="ce-section">
-                <div class="ce-section-title">消息隐藏 / 显示控制台</div>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                    <span>范围：</span>
-                    <input type="number" class="ce-number-input" id="ce-hide-start" placeholder="起始" min="0">
+                <div class="ce-section-title">消息隐藏与显示系统</div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                    <span>目标区间</span>
+                    <input type="number" class="ce-number-input" id="ce-vis-start" placeholder="起始层" min="1" style="width:75px;">
                     <span>至</span>
-                    <input type="number" class="ce-number-input" id="ce-hide-end" placeholder="结束" min="0">
+                    <input type="number" class="ce-number-input" id="ce-vis-end" placeholder="结束层" min="1" style="width:75px;">
                 </div>
                 <div style="display:flex;gap:10px;">
-                    <button class="ce-btn" id="ce-hide-btn" style="flex:1;">👻 隐藏所选</button>
-                    <button class="ce-btn" id="ce-unhide-btn" style="flex:1;">👀 显示所选</button>
+                    <button class="ce-btn" id="ce-hide-btn" style="flex:1;background:#e53935;color:#fff;border:none;">隐藏选中层</button>
+                    <button class="ce-btn" id="ce-unhide-btn" style="flex:1;background:#43a047;color:#fff;border:none;">显示选中层</button>
                 </div>
             </div>
 
@@ -356,10 +363,9 @@ function createPanel() {
                     </div>
                 </div>
             </div>
-
             <div class="ce-section">
                 <div class="ce-section-title">标签过滤</div>
-                <input type="text" class="ce-input" id="ce-tags-input" placeholder="标签名，如 thinking（留空不过滤）">
+                <input type="text" class="ce-input" id="ce-tags-input" placeholder="标签名，如 thinking（留空不过滤）" style="width:100%;">
                 <div class="ce-radio-group" style="margin-top:12px">
                     <label><input type="radio" name="ce-filter" value="0" checked> 不过滤</label>
                     <label><input type="radio" name="ce-filter" value="1"> 去除标签及内容</label>
@@ -378,9 +384,9 @@ function createPanel() {
                 </div>
                 <div class="ce-radio-group" id="ce-compress-group">
                     <label><input type="radio" name="ce-compress" value="1.0" checked> 原画质</label>
-                    <label><input type="radio" name="ce-compress" value="0.8"> 轻度压缩(0.8)</label>
-                    <label><input type="radio" name="ce-compress" value="0.6"> 中度压缩(0.6)</label>
-                    <label><input type="radio" name="ce-compress" value="0.4"> 极限压缩(0.4)</label>
+                    <label><input type="radio" name="ce-compress" value="0.8"> 轻度压缩</label>
+                    <label><input type="radio" name="ce-compress" value="0.6"> 中度压缩</label>
+                    <label><input type="radio" name="ce-compress" value="0.4"> 极限压缩</label>
                 </div>
             </div>
             <div class="ce-section" id="ce-style-section">
@@ -463,7 +469,7 @@ function createPanel() {
     <div id="ce-search-panel" class="theme-light">
         <div class="ce-search-header">
             <input type="text" class="ce-search-input" id="ce-search-input" placeholder="输入关键字搜索...">
-            <span class="ce-search-count" id="ce-search-count">0 条匹配</span>
+            <span class="ce-search-count" id="ce-search-count" style="white-space:nowrap;">0 条匹配</span>
             <div class="ce-search-close" id="ce-search-close">×</div>
         </div>
         <div class="ce-search-body" id="ce-search-results">
@@ -502,7 +508,7 @@ function setupPanelEvents() {
     document.getElementById('ce-close-btn').addEventListener('click', closePanel);
     document.getElementById('ce-overlay').addEventListener('click', closePanel);
 
-    // 跳转逻辑
+    // 导航功能：跳转、回顶、回底
     document.getElementById('ce-jump-btn').addEventListener('click', function () {
         const floor = parseInt(document.getElementById('ce-jump-input').value);
         if (!floor || floor < 1) return;
@@ -515,36 +521,42 @@ function setupPanelEvents() {
         }
     });
 
-    // 顶部与底部跳转按钮
-    document.getElementById('ce-top-btn').addEventListener('click', function() {
-        const chat = document.getElementById('chat');
-        if (chat) { chat.scrollTo({ top: 0, behavior: 'smooth' }); closePanel(); }
-    });
-    document.getElementById('ce-bottom-btn').addEventListener('click', function() {
-        const chat = document.getElementById('chat');
-        if (chat) { chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' }); closePanel(); }
+    document.getElementById('ce-scroll-top-btn').addEventListener('click', function() {
+        const allMes = document.querySelectorAll('#chat .mes');
+        if(allMes.length > 0) {
+            allMes[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            closePanel();
+        }
     });
 
-    // 隐藏和显示逻辑集成
-    document.getElementById('ce-hide-btn').addEventListener('click', async function () {
-        const start = document.getElementById('ce-hide-start').value;
-        const end = document.getElementById('ce-hide-end').value;
-        if (!start || !end) return alert('江窈宝宝，请把起始和结束的层数都填上哦！');
-        try {
-            await executeSlashCommands(\`/hide \${start}-\${end}\`);
+    document.getElementById('ce-scroll-bottom-btn').addEventListener('click', function() {
+        const allMes = document.querySelectorAll('#chat .mes');
+        if(allMes.length > 0) {
+            allMes[allMes.length - 1].scrollIntoView({ behavior: 'smooth', block: 'end' });
             closePanel();
-        } catch(e) { console.error(e); }
+        }
     });
 
-    document.getElementById('ce-unhide-btn').addEventListener('click', async function () {
-        const start = document.getElementById('ce-hide-start').value;
-        const end = document.getElementById('ce-hide-end').value;
-        if (!start || !end) return alert('江窈宝宝，请把起始和结束的层数都填上哦！');
+    // 隐藏与显示控制
+    const executeVisibilityCommand = async (action) => {
+        const start = parseInt(document.getElementById('ce-vis-start').value);
+        const end = parseInt(document.getElementById('ce-vis-end').value);
+        if (!start || !end || start > end) {
+            alert('请输入有效的楼层范围，且起始层不能大于结束层。');
+            return;
+        }
+        const cmd = `/${action} ${start}-${end}`;
         try {
-            await executeSlashCommands(\`/unhide \${start}-\${end}\`);
+            await executeSlashCommands(cmd);
             closePanel();
-        } catch(e) { console.error(e); }
-    });
+        } catch(e) {
+            console.error('可视状态命令执行失败:', e);
+            alert('执行失败，请检查酒馆版本是否支持该Slash命令。');
+        }
+    };
+
+    document.getElementById('ce-hide-btn').addEventListener('click', () => executeVisibilityCommand('hide'));
+    document.getElementById('ce-unhide-btn').addEventListener('click', () => executeVisibilityCommand('unhide'));
 
     document.querySelectorAll('input[name="ce-sel-method"]').forEach(r => {
         r.addEventListener('change', function () {
@@ -571,10 +583,15 @@ function setupPanelEvents() {
     });
 
     document.querySelectorAll('input[name="ce-layout"]').forEach(r => {
-        r.addEventListener('change', function () { state.exportLayout = this.value; });
+        r.addEventListener('change', function () {
+            state.exportLayout = this.value;
+        });
     });
+
     document.querySelectorAll('input[name="ce-compress"]').forEach(r => {
-        r.addEventListener('change', function () { state.compressLevel = this.value; });
+        r.addEventListener('change', function () {
+            state.compressLevel = this.value;
+        });
     });
 
     document.querySelectorAll('.ce-style-card').forEach(card => {
@@ -710,9 +727,9 @@ function setupSearchPanelEvents() {
                 item.className = 'ce-search-item';
                 item.innerHTML = `
                     <div class="ce-search-item-header">
-                        <span>第 \${floor} 层 | \${name}</span>
+                        <span>第 ${floor} 层 | ${name}</span>
                     </div>
-                    <div class="ce-search-item-text">\${text}</div>
+                    <div class="ce-search-item-text">${text}</div>
                 `;
 
                 item.addEventListener('click', () => {
@@ -725,7 +742,7 @@ function setupSearchPanelEvents() {
             }
         });
 
-        searchCount.textContent = \`\${matchCount} 条匹配\`;
+        searchCount.textContent = `${matchCount} 条匹配`;
     });
 }
 
@@ -844,7 +861,7 @@ function enterSelectionMode() {
     state.selectionMode = true;
     closePanel();
 
-    // 修复多选框重叠：严防死守，先彻底清理可能残留的旧复选框
+    // 强制清理由于旧状态遗留的所有勾选框，杜绝双重重叠现象
     document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
 
     const allMes = document.querySelectorAll('#chat .mes');
@@ -966,7 +983,7 @@ function collectMessages() {
             });
 
             if (filterMode === '2') {
-                processedText = keptText.join('\\n\\n');
+                processedText = keptText.join('\n\n');
             }
         }
 
@@ -984,13 +1001,13 @@ function collectMessages() {
                 } else {
                     finalHtml = processedText
                         .replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>')
-                        .replace(/\\n/g, '<br>');
+                        .replace(/\n/g, '<br>');
                 }
             } catch(e) {
-                finalHtml = processedText.replace(/\\n/g, '<br>');
+                finalHtml = processedText.replace(/\n/g, '<br>');
             }
         } else if (filterMode === '2' && !msg.hasRaw) {
-             finalHtml = processedText.replace(/\\n/g, '<br>');
+             finalHtml = processedText.replace(/\n/g, '<br>');
         }
 
         const tempDiv = document.createElement('div');
@@ -1012,17 +1029,17 @@ function doExport() {
             alert('没有可导出的消息。请检查是否已选择消息，或标签过滤设置是否正确。');
             return;
         }
+
         if (state.format === 'txt') {
             exportToTxt(messages);
         } else {
             exportToImage(messages);
         }
 
-        // 修复：导出完成后自动重置所选消息
-        if (state.selectMethod === 'manual') {
-            state.selectedMesIds.clear();
-            updateSelInfo();
-        }
+        // 导出后彻底重置所有多选状态
+        state.selectedMesIds.clear();
+        updateSelInfo();
+        document.querySelectorAll('.ce-checkbox').forEach(cb => cb.checked = false);
 
     } catch (e) {
         console.error('[ChatExporter] 导出出错:', e);
@@ -1033,7 +1050,7 @@ function doExport() {
 function exportToTxt(messages) {
     let content = '';
     messages.forEach(msg => {
-        content += msg.name + ':\\n' + msg.text + '\\n\\n';
+        content += msg.name + ':\n' + msg.text + '\n\n';
     });
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const a = document.createElement('a');
