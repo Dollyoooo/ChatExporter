@@ -949,16 +949,17 @@ function collectMessages() {
         if (!textEl) return;
 
         let name = "User";
-        let dateStr = "";
-        if (chatArray && chatArray[mesId]) {
-            if (chatArray[mesId].name) name = chatArray[mesId].name;
-            if (chatArray[mesId].send_date) dateStr = chatArray[mesId].send_date;
+        if (chatArray && chatArray[mesId] && chatArray[mesId].name) {
+            name = chatArray[mesId].name;
         } else {
             const nameEl = mes.querySelector('.ch_name');
             name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
-            const dateEl = mes.querySelector('.mes_date');
-            if (dateEl) dateStr = dateEl.innerText.trim();
         }
+
+        // 直接从聊天框抓取肉眼可见的时间文本，完美保留 de marzo de 等原版格式
+        let dateStr = "";
+        const dateEl = mes.querySelector('.mes_date');
+        if (dateEl) dateStr = dateEl.innerText.trim();
 
         let rawText = "";
         let hasRaw = false;
@@ -1079,7 +1080,7 @@ async function doExport() {
 function exportToTxt(messages) {
     let content = '';
     messages.forEach(msg => {
-        const header = `${msg.name} ${msg.date}`.trim();
+        const header = `${msg.name} ${msg.floor} ${msg.date}`.trim();
         content += header + ':\n' + msg.text + '\n\n';
     });
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -1124,7 +1125,7 @@ async function exportToImage(messages) {
     messages.forEach(msg => {
         const div = document.createElement('div');
         div.className = 'ce-msg';
-        const headerText = `${msg.name} ${msg.date}`.trim();
+        const headerText = `${msg.name} ${msg.floor} ${msg.date}`.trim();
 
         let nameStyle = '';
         if (state.style === 'default' && state.nameColor) {
