@@ -952,11 +952,18 @@ function collectMessages() {
             name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
         }
 
-        // 完全摒弃系统自动生成，强制抓取酒馆原本在节点里的原生日期（即使视觉隐藏也能提取）
+        // 优化日期抓取：摒弃 textContent（它会把酒馆隐藏的备用格式全抓出来导致顺序错乱）
+        // 改用 innerText 只抓取肉眼实际可见的正确格式文本。如果遇到特殊情况为空，则读取 title 属性。
         let dateStr = "";
         const dateEl = mes.querySelector('.mes_date') || mes.querySelector('.timestamp');
         if (dateEl) {
-            dateStr = (dateEl.textContent || "").trim();
+            let text = dateEl.innerText;
+            // 如果 innerText 因页面遮挡等原因拿不到，就优先抓取悬浮提示(title)，最后再保底使用 textContent
+            if (!text || text.trim() === '') {
+                text = dateEl.getAttribute('title') || dateEl.textContent;
+            }
+            // 清理掉可能存在的换行符和多余空格，保证它输出是一行整齐干净的文字
+            dateStr = (text || "").trim().replace(/\n/g, ' ').replace(/\s+/g, ' ');
         }
 
         let rawText = "";
