@@ -1079,7 +1079,7 @@ async function doExport() {
 function exportToTxt(messages) {
     let content = '';
     messages.forEach(msg => {
-        const header = `${msg.name} ${msg.floor} ${msg.date}`.trim();
+        const header = `${msg.name} ${msg.date}`.trim();
         content += header + ':\n' + msg.text + '\n\n';
     });
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -1124,7 +1124,7 @@ async function exportToImage(messages) {
     messages.forEach(msg => {
         const div = document.createElement('div');
         div.className = 'ce-msg';
-        const headerText = `${msg.name} ${msg.floor} ${msg.date}`.trim();
+        const headerText = `${msg.name} ${msg.date}`.trim();
 
         let nameStyle = '';
         if (state.style === 'default' && state.nameColor) {
