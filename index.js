@@ -11,6 +11,7 @@ const state = {
     exportLayout: 'pc',
     bgColor: '#ffffff',
     textColor: '#000000',
+    nameColor: '#888888',
     colorTarget: 'bg',
     selectMethod: 'manual',
     selectionMode: false,
@@ -249,20 +250,22 @@ function injectStyles() {
 .ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
 .ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
-/* ===== 顶端悬浮操作栏 (彻底避开底部键盘与输入框遮挡，居中并排) ===== */
+/* ===== 顶端悬浮操作栏 (纯透明，仅做并排定位) ===== */
 #ce-selection-bar {
     position:fixed !important; top:80px !important; left:50% !important;
     transform:translateX(-50%) !important; z-index:2147483647 !important;
     display:flex !important; gap:16px !important;
-    background:rgba(0,0,0,0.7) !important; padding:12px 20px !important;
-    border-radius:30px !important; box-shadow:0 6px 16px rgba(0,0,0,0.4) !important;
-    width:max-content !important; backdrop-filter:blur(5px) !important;
+    background:transparent !important; padding:0 !important;
+    border:none !important; box-shadow:none !important;
+    width:max-content !important; pointer-events:none !important;
 }
 .ce-float-btn {
-    padding:10px 24px !important; border-radius:20px !important;
-    font-size:15px !important; font-weight:bold !important; cursor:pointer !important;
+    padding:8px 18px !important; border-radius:18px !important;
+    font-size:14px !important; font-weight:bold !important; cursor:pointer !important;
     border:none !important; outline:none !important; transition:all 0.2s !important;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3) !important; pointer-events:auto !important;
 }
+
 .ce-float-btn:active { transform:scale(0.95) !important; }
 #ce-float-cancel-btn { background:#e53935 !important; color:#ffffff !important; }
 #ce-float-confirm-btn { background:#4caf50 !important; color:#ffffff !important; }
@@ -411,9 +414,16 @@ function createPanel() {
                     <input type="text" class="ce-hex-input" id="ce-text-hex" value="#000000">
                     <div class="ce-swatch" id="ce-text-swatch" style="background:#000000"></div>
                 </div>
+                <div class="ce-color-row">
+                    <span>名字色</span>
+                    <input type="text" class="ce-hex-input" id="ce-name-hex" value="#888888">
+                    <div class="ce-swatch" id="ce-name-swatch" style="background:#888888"></div>
+                    <div style="flex:1"></div>
+                </div>
                 <div class="ce-target-btns">
                     <div class="ce-target-btn active" data-target="bg">编辑背景色</div>
                     <div class="ce-target-btn" data-target="text">编辑文字色</div>
+                    <div class="ce-target-btn" data-target="name">编辑名字色</div>
                 </div>
                 <div class="ce-picker-tabs">
                     <div class="ce-picker-tab active" data-tab="grid">网格</div>
@@ -628,6 +638,13 @@ function setupPanelEvents() {
             if (state.colorTarget === 'text') syncSlidersFromState();
         }
     });
+    document.getElementById('ce-name-hex').addEventListener('change', function () {
+        if (/^#[0-9a-fA-F]{6}$/.test(this.value)) {
+            state.nameColor = this.value;
+            document.getElementById('ce-name-swatch').style.background = this.value;
+            if (state.colorTarget === 'name') syncSlidersFromState();
+        }
+    });
 
     document.getElementById('ce-export-btn').addEventListener('click', function () {
         doExport();
@@ -825,16 +842,20 @@ function applyPickedColor(hex) {
         state.bgColor = hex;
         document.getElementById('ce-bg-hex').value = hex;
         document.getElementById('ce-bg-swatch').style.background = hex;
-    } else {
+    } else if (state.colorTarget === 'text') {
         state.textColor = hex;
         document.getElementById('ce-text-hex').value = hex;
         document.getElementById('ce-text-swatch').style.background = hex;
+    } else {
+        state.nameColor = hex;
+        document.getElementById('ce-name-hex').value = hex;
+        document.getElementById('ce-name-swatch').style.background = hex;
     }
     syncSlidersFromState();
 }
 
 function syncSlidersFromState() {
-    const hex = state.colorTarget === 'bg' ? state.bgColor : state.textColor;
+    const hex = state.colorTarget === 'bg' ? state.bgColor : (state.colorTarget === 'text' ? state.textColor : state.nameColor);
     const rgb = hexToRgb(hex);
     document.getElementById('ce-r-slider').value = rgb.r;
     document.getElementById('ce-g-slider').value = rgb.g;
@@ -920,17 +941,23 @@ function collectMessages() {
     const context = typeof getContext === 'function' ? getContext() : null;
     const chatArray = context ? context.chat : [];
 
-    const processMes = (mes) => {
+    const allMesElements = Array.from(document.querySelectorAll('#chat .mes'));
+
+    const processMes = (mes, floorNum) => {
         const mesId = mes.getAttribute('mesid');
         const textEl = mes.querySelector('.mes_text');
         if (!textEl) return;
 
         let name = "User";
-        if (chatArray && chatArray[mesId] && chatArray[mesId].name) {
-            name = chatArray[mesId].name;
+        let dateStr = "";
+        if (chatArray && chatArray[mesId]) {
+            if (chatArray[mesId].name) name = chatArray[mesId].name;
+            if (chatArray[mesId].send_date) dateStr = chatArray[mesId].send_date;
         } else {
             const nameEl = mes.querySelector('.ch_name');
             name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
+            const dateEl = mes.querySelector('.mes_date');
+            if (dateEl) dateStr = dateEl.innerText.trim();
         }
 
         let rawText = "";
@@ -943,23 +970,27 @@ function collectMessages() {
             rawText = textEl.innerText;
         }
 
-        raw.push({ name, rawText, html: textEl.innerHTML, hasRaw });
+        raw.push({ name, floor: floorNum, date: dateStr, rawText, html: textEl.innerHTML, hasRaw });
     };
 
     if (state.selectMethod === 'manual') {
-        state.selectedMesIds.forEach(mesId => {
+        const sortedIds = Array.from(state.selectedMesIds);
+        const idToFloor = {};
+        allMesElements.forEach((m, i) => { idToFloor[m.getAttribute('mesid')] = i + 1; });
+        sortedIds.sort((a, b) => idToFloor[a] - idToFloor[b]);
+
+        sortedIds.forEach(mesId => {
             const mes = document.querySelector('.mes[mesid="' + mesId + '"]');
-            if (mes) processMes(mes);
+            if (mes) processMes(mes, idToFloor[mesId]);
         });
     } else if (state.selectMethod === 'all') {
-        document.querySelectorAll('#chat .mes').forEach(mes => processMes(mes));
+        allMesElements.forEach((mes, idx) => processMes(mes, idx + 1));
     } else {
         const start = parseInt(document.getElementById('ce-floor-start').value) || 1;
         const end = parseInt(document.getElementById('ce-floor-end').value) || 999999;
-        const allMes = document.querySelectorAll('#chat .mes');
-        allMes.forEach((mes, idx) => {
-            const floor = idx + 1;
-            if (floor >= start && floor <= end) processMes(mes);
+        allMesElements.forEach((mes, idx) => {
+            const floorNum = idx + 1;
+            if (floorNum >= start && floorNum <= end) processMes(mes, floorNum);
         });
     }
 
@@ -1015,7 +1046,7 @@ function collectMessages() {
         tempDiv.innerHTML = finalHtml;
         const finalText = tempDiv.innerText.trim() || processedText;
 
-        filtered.push({ name: msg.name, text: finalText, html: finalHtml });
+        filtered.push({ name: msg.name, floor: msg.floor, date: msg.date, text: finalText, html: finalHtml });
     });
 
     return filtered;
@@ -1048,7 +1079,8 @@ async function doExport() {
 function exportToTxt(messages) {
     let content = '';
     messages.forEach(msg => {
-        content += msg.name + ':\n' + msg.text + '\n\n';
+        const header = `${msg.name} ${msg.floor} ${msg.date}`.trim();
+        content += header + ':\n' + msg.text + '\n\n';
     });
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const a = document.createElement('a');
@@ -1092,7 +1124,14 @@ async function exportToImage(messages) {
     messages.forEach(msg => {
         const div = document.createElement('div');
         div.className = 'ce-msg';
-        div.innerHTML = '<div class="ce-msg-name">' + msg.name + '</div><div class="ce-msg-content">' + msg.html + '</div>';
+        const headerText = `${msg.name} ${msg.floor} ${msg.date}`.trim();
+
+        let nameStyle = '';
+        if (state.style === 'default' && state.nameColor) {
+            nameStyle = `style="color:${state.nameColor};"`;
+        }
+
+        div.innerHTML = `<div class="ce-msg-name" ${nameStyle}>${headerText}</div><div class="ce-msg-content">${msg.html}</div>`;
         container.appendChild(div);
     });
 
