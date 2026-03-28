@@ -2,7 +2,7 @@ import { getContext } from '../../../extensions.js';
 import { executeSlashCommands } from '../../../slash-commands/SlashCommandParser.js';
 
 // ================================================================
-//  Chat Exporter v2.9 — 聊天记录导出器
+//  Chat Exporter v2.9 — 聊天记录导出器 (江窈专属完美优化版)
 // ================================================================
 
 const state = {
@@ -1130,27 +1130,35 @@ async function exportToImage(messages) {
 /* ===================== 扩展菜单按钮 ===================== */
 
 function createMenuButton() {
-    // 增加自动等待机制，每500毫秒寻找一次，直到酒馆菜单加载完毕
-    const checkExist = setInterval(function() {
-        const menu = document.getElementById('extensionsMenu');
-        if (menu) {
-            clearInterval(checkExist); // 找到菜单后停止寻找
-            if (document.getElementById('ce-ext-menu-item')) return;
+    // 采用全局监听机制，对抗酒馆原生菜单的动态重置
+    document.addEventListener('click', function(e) {
+        const trigger = document.getElementById('extensionsMenuButton');
 
-            const item = document.createElement('div');
-            item.id = 'ce-ext-menu-item';
-            item.className = 'list-group-item flex-container flexGap5';
-            item.innerHTML = '<div class="fa-solid fa-file-export extensionsMenuExtensionButton"></div><span>聊天导出</span>';
+        // 当监测到你点击了顶部的魔杖图标时
+        if (trigger && (e.target === trigger || trigger.contains(e.target))) {
 
-            item.addEventListener('click', function () {
-                const trigger = document.getElementById('extensionsMenuButton');
-                if (trigger) trigger.click(); // 点击后自动收起扩展侧边栏
-                openPanel(); // 展开我们的导出面板
-            });
+            // 延迟100毫秒，等待酒馆的原生菜单彻底生成完毕
+            setTimeout(() => {
+                const menu = document.getElementById('extensionsMenu');
 
-            menu.prepend(item);
+                // 如果菜单存在，且我们的按钮还没插进去，就强行挂载
+                if (menu && !document.getElementById('ce-ext-menu-item')) {
+                    const item = document.createElement('div');
+                    item.id = 'ce-ext-menu-item';
+                    item.className = 'list-group-item flex-container flexGap5';
+                    item.innerHTML = '<div class="fa-solid fa-file-export extensionsMenuExtensionButton"></div><span>聊天导出</span>';
+
+                    item.addEventListener('click', function () {
+                        if (trigger) trigger.click(); // 点击后收起原生菜单
+                        openPanel(); // 展开导出面板
+                    });
+
+                    // 强制插入到菜单最顶部
+                    menu.prepend(item);
+                }
+            }, 100);
         }
-    }, 500);
+    }, true);
 }
 
 /* ===================== 初始化 ===================== */
@@ -1159,6 +1167,6 @@ jQuery(async function () {
     console.log('[ChatExporter] v2.9 核心开始加载...');
     injectStyles();
     createPanel();
-    createMenuButton(); // 现在的按钮拥有了自动等待加载的能力
-    console.log('[ChatExporter] v2.9 界面注入完成，等待菜单挂载...');
+    createMenuButton();
+    console.log('[ChatExporter] v2.9 加载完成，已开启菜单防刷保护机制');
 });
