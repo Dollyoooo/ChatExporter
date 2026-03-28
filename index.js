@@ -8,7 +8,7 @@ const state = {
     selectedMesIds: new Set(),
     style: 'default',
     format: 'img',
-    exportLayout: 'pc',
+    exportLayout: 'mobile',
     bgColor: '#ffffff',
     textColor: '#000000',
     nameColor: '#888888',
@@ -355,7 +355,7 @@ function createPanel() {
             </div>
             <div class="ce-section">
                 <div class="ce-section-title">标签过滤</div>
-                <input type="text" class="ce-input" id="ce-tags-input" placeholder="标签名，如 thinking（留空不过滤）">
+                <input type="text" class="ce-input" id="ce-tags-input" placeholder="示例：thinking, hidden（多个用英文逗号分隔，留空不过滤）">
                 <div class="ce-radio-group" style="margin-top:12px">
                     <label><input type="radio" name="ce-filter" value="0" checked> 不过滤</label>
                     <label><input type="radio" name="ce-filter" value="1"> 去除标签及内容</label>
@@ -369,8 +369,8 @@ function createPanel() {
                     <label><input type="radio" name="ce-format" value="img" checked> 图片导出</label>
                 </div>
                 <div class="ce-radio-group" id="ce-layout-group" style="margin-bottom:12px;">
-                    <label><input type="radio" name="ce-layout" value="pc" checked> 电脑版 (宽屏)</label>
-                    <label><input type="radio" name="ce-layout" value="mobile"> 手机版 (窄屏阅读)</label>
+                    <label><input type="radio" name="ce-layout" value="pc"> 电脑版 (宽屏)</label>
+                    <label><input type="radio" name="ce-layout" value="mobile" checked> 手机版 (窄屏阅读)</label>
                 </div>
                 <div class="ce-radio-group" id="ce-compress-group">
                     <label><input type="radio" name="ce-compress" value="1.0" checked> 原画质</label>
