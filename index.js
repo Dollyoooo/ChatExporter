@@ -14,7 +14,8 @@ const state = {
     colorTarget: 'bg',
     selectMethod: 'manual',
     selectionMode: false,
-    theme: 'light'
+    theme: 'light',
+    compressLevel: '1.0' // 新增：默认不压缩
 };
 
 const PRESET_COLORS = [
@@ -198,10 +199,11 @@ function injectStyles() {
 .ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
 .ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
-/* ===== 完成选择按钮 (绝对保证可见) ===== */
+/* ===== 完成选择按钮 (保证可见) ===== */
 #ce-confirm-select-btn {
-    position:fixed !important; bottom:40px !important; left:50% !important;
+    position:fixed !important; bottom:120px !important; left:50% !important;
     transform:translateX(-50%) !important;
+
     padding:16px 40px !important; border-radius:30px !important;
     font-size:16px !important; font-weight:bold !important; cursor:pointer !important;
     z-index:2147483647 !important; /* 最高层级 */
@@ -302,13 +304,20 @@ function createPanel() {
                 <div class="ce-section-title">导出格式与排版</div>
                 <div class="ce-radio-group" style="margin-bottom:12px;">
                     <label><input type="radio" name="ce-format" value="txt"> TXT 文本</label>
-                    <label><input type="radio" name="ce-format" value="img" checked> PNG 图片</label>
+                    <label><input type="radio" name="ce-format" value="img" checked> 图片导出</label>
                 </div>
-                <div class="ce-radio-group" id="ce-layout-group">
+                <div class="ce-radio-group" id="ce-layout-group" style="margin-bottom:12px;">
                     <label><input type="radio" name="ce-layout" value="pc" checked> 电脑版 (宽屏)</label>
                     <label><input type="radio" name="ce-layout" value="mobile"> 手机版 (窄屏阅读)</label>
                 </div>
+                <div class="ce-radio-group" id="ce-compress-group">
+                    <label><input type="radio" name="ce-compress" value="1.0" checked> 原画质</label>
+                    <label><input type="radio" name="ce-compress" value="0.8"> 轻度压缩(0.8)</label>
+                    <label><input type="radio" name="ce-compress" value="0.6"> 中度压缩(0.6)</label>
+                    <label><input type="radio" name="ce-compress" value="0.4"> 极限压缩(0.4)</label>
+                </div>
             </div>
+
             <div class="ce-section" id="ce-style-section">
                 <div class="ce-section-title">导出样式</div>
                 <div class="ce-style-cards">
@@ -430,6 +439,7 @@ function setupPanelEvents() {
     });
 
     document.getElementById('ce-sel-btn').addEventListener('click', function () {
+        state.selectedMesIds.clear(); // 修复2：每次开启选择模式前，清空历史选择
         enterSelectionMode();
     });
 
@@ -439,6 +449,7 @@ function setupPanelEvents() {
             const showImgOptions = this.value === 'img';
             document.getElementById('ce-style-section').style.display = showImgOptions ? '' : 'none';
             document.getElementById('ce-layout-group').style.display = showImgOptions ? 'flex' : 'none';
+            document.getElementById('ce-compress-group').style.display = showImgOptions ? 'flex' : 'none';
             updateColorSectionVisibility();
         });
     });
@@ -446,6 +457,12 @@ function setupPanelEvents() {
     document.querySelectorAll('input[name="ce-layout"]').forEach(r => {
         r.addEventListener('change', function () {
             state.exportLayout = this.value;
+        });
+    });
+
+    document.querySelectorAll('input[name="ce-compress"]').forEach(r => {
+        r.addEventListener('change', function () {
+            state.compressLevel = this.value; // 获取压缩档次
         });
     });
 
@@ -866,8 +883,18 @@ async function exportToImage(messages) {
             useCORS: true,
         });
         const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = 'chat_export_' + Date.now() + '.png';
+
+        // 修复3：根据压缩选项决定导出格式和质量
+        if (state.compressLevel === '1.0') {
+            a.href = canvas.toDataURL('image/png');
+            a.download = 'chat_export_' + Date.now() + '.png';
+        } else {
+            // 使用 JPEG 格式以支持压缩，传入指定的压缩质量参数 (0.8, 0.6, 0.4)
+            const quality = parseFloat(state.compressLevel);
+            a.href = canvas.toDataURL('image/jpeg', quality);
+            a.download = 'chat_export_compressed_' + Date.now() + '.jpg';
+        }
+
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
