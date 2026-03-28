@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
 
 // ================================================================
-//  Chat Exporter v2.8 — 聊天记录导出器
+//  Chat Exporter v2.9 — 聊天记录导出器
 // ================================================================
 
 const state = {
@@ -71,7 +71,7 @@ function injectStyles() {
     position:fixed; top:0; left:0; width:100vw; height:100vh;
     background:rgba(0,0,0,0.7); z-index:2147483640;
     opacity:0; pointer-events:none; transition:opacity .2s ease;
-    display: none; /* 默认彻底隐藏，避免干扰SillyTavern背景和点击 */
+    display: none;
 }
 #ce-search-overlay { z-index:2147483645; }
 #ce-overlay.open, #ce-search-overlay.open {
@@ -102,7 +102,7 @@ function injectStyles() {
 #ce-search-panel {
     position:fixed; top:8vh; left:50%;
     transform:translateX(-50%);
-    width:90vw; max-width:550px; height:80vh; /* 限制高度开启内部滑动 */
+    width:90vw; max-width:550px; height:80vh;
     border-radius:12px;
     z-index:2147483646; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
@@ -234,10 +234,10 @@ function injectStyles() {
     cursor:pointer !important; margin:0 !important;
     z-index:2147483635 !important;
     background:transparent !important;
-    background-image:none !important; /* 强制干掉自带背景图 */
+    background-image:none !important;
     transition:all .2s;
 }
-.ce-checkbox::before { display: none !important; content: none !important; } /* 强制干掉自带伪元素 */
+.ce-checkbox::before { display: none !important; content: none !important; }
 .ce-checkbox.theme-light:checked { background:#000000 !important; border-color:#000000 !important; }
 .ce-checkbox.theme-dark:checked { background:#ffffff !important; border-color:#ffffff !important; }
 .ce-checkbox:checked::after {
@@ -249,40 +249,40 @@ function injectStyles() {
 .ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
 .ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
-/* ===== 多选模式底部操作栏 (绝对防遮挡双按钮) ===== */
-#ce-selection-bar {
-    position:fixed !important; bottom:10vh !important; left:50% !important;
-    transform:translateX(-50%) !important;
-    display:flex !important; gap:16px !important;
+/* ===== 独立的悬浮选择按钮 (绝对防遮盖与分离) ===== */
+.ce-float-btn {
+    position:fixed !important;
+    bottom:40px !important;
     z-index:2147483647 !important;
-    padding:12px 24px !important;
+    padding:14px 28px !important;
     border-radius:30px !important;
-    box-shadow:0 8px 24px rgba(0,0,0,0.5) !important;
-    width:max-content !important;
+    font-size:16px !important;
+    font-weight:bold !important;
+    cursor:pointer !important;
+    border:none !important;
+    outline:none !important;
+    box-shadow:0 6px 16px rgba(0,0,0,0.4) !important;
+    transition:transform 0.2s, opacity 0.2s !important;
 }
-#ce-selection-bar.theme-light { background:#ffffff !important; border:1px solid #eeeeee !important; }
-#ce-selection-bar.theme-dark { background:#222222 !important; border:1px solid #444444 !important; }
-
-.ce-sel-bar-btn {
-    padding:12px 24px !important; border-radius:20px !important;
-    font-size:15px !important; font-weight:bold !important; cursor:pointer !important;
-    border:none !important; outline:none !important; transition:opacity 0.2s !important;
+.ce-float-btn:active { transform:scale(0.95) !important; opacity:0.8 !important; }
+#ce-float-cancel-btn {
+    left:30px !important;
+    background:#e53935 !important; /* 红色退出按钮 */
+    color:#ffffff !important;
 }
-.ce-sel-bar-btn:active { opacity:0.8 !important; }
-.ce-sel-btn-cancel { background:#f0f0f0 !important; color:#333 !important; }
-.ce-sel-btn-confirm { background:#000000 !important; color:#ffffff !important; }
-#ce-selection-bar.theme-dark .ce-sel-btn-cancel { background:#444444 !important; color:#fff !important; }
-#ce-selection-bar.theme-dark .ce-sel-btn-confirm { background:#ffffff !important; color:#000000 !important; }
-
+#ce-float-confirm-btn {
+    right:30px !important;
+    background:#4caf50 !important; /* 绿色确认按钮 */
+    color:#ffffff !important;
+}
 @media (max-width:768px) {
-    #ce-selection-bar {
-        bottom:12vh !important; /* 手机端拉高防遮挡 */
-        width:85vw !important;
-        justify-content:space-between !important;
-        padding:12px 16px !important;
-        box-sizing:border-box !important;
+    .ce-float-btn {
+        bottom:20px !important; /* 手机端固定像素位置，杜绝vh问题 */
+        padding:12px 20px !important;
+        font-size:15px !important;
     }
-    .ce-sel-bar-btn { padding:12px 10px !important; flex:1 !important; text-align:center !important; margin:0 6px !important; }
+    #ce-float-cancel-btn { left:10px !important; }
+    #ce-float-confirm-btn { right:10px !important; }
 }
 
 /* ===== 渲染容器基础 ===== */
@@ -354,8 +354,9 @@ function createPanel() {
                     <label><input type="radio" name="ce-sel-method" value="all"> 全部导出</label>
                 </div>
                 <div id="ce-manual-area" style="margin-top:12px">
-                    <div style="display:flex;align-items:center;gap:10px">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <button class="ce-btn" id="ce-sel-btn">开启选择模式</button>
+                        <button class="ce-btn" id="ce-cancel-sel-btn">取消选择</button>
                         <span id="ce-sel-info">已选 0 条</span>
                     </div>
                 </div>
@@ -477,9 +478,7 @@ function createPanel() {
             <input type="text" class="ce-search-input" id="ce-search-input" placeholder="输入关键字搜索...">
             <span class="ce-search-count" id="ce-search-count">0 条匹配</span>
         </div>
-        <div class="ce-search-body" id="ce-search-results">
-            <!-- 搜索结果在这里显示 -->
-        </div>
+        <div class="ce-search-body" id="ce-search-results"></div>
     </div>
     `;
 
@@ -549,6 +548,12 @@ function setupPanelEvents() {
     document.getElementById('ce-sel-btn').addEventListener('click', function () {
         state.selectedMesIds.clear();
         enterSelectionMode();
+    });
+
+    // 主面板新增的取消选择按钮
+    document.getElementById('ce-cancel-sel-btn').addEventListener('click', function () {
+        state.selectedMesIds.clear();
+        updateSelInfo();
     });
 
     document.querySelectorAll('input[name="ce-format"]').forEach(r => {
@@ -878,36 +883,33 @@ function enterSelectionMode() {
         mes.insertBefore(cb, mes.firstChild);
     });
 
-    if (!document.getElementById('ce-selection-bar')) {
-        const bar = document.createElement('div');
-        bar.id = 'ce-selection-bar';
-        bar.className = state.theme === 'light' ? 'theme-light' : 'theme-dark';
+    // 每次进入模式强制销毁旧按钮，重新生成独立按钮
+    if (document.getElementById('ce-float-cancel-btn')) document.getElementById('ce-float-cancel-btn').remove();
+    if (document.getElementById('ce-float-confirm-btn')) document.getElementById('ce-float-confirm-btn').remove();
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'ce-sel-bar-btn ce-sel-btn-cancel';
-        cancelBtn.textContent = '退出选择';
-        cancelBtn.addEventListener('click', () => exitSelectionMode(true));
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'ce-float-cancel-btn';
+    cancelBtn.className = 'ce-float-btn';
+    cancelBtn.textContent = '退出选择';
+    cancelBtn.addEventListener('click', () => exitSelectionMode(true));
 
-        const confirmBtn = document.createElement('button');
-        confirmBtn.className = 'ce-sel-bar-btn ce-sel-btn-confirm';
-        confirmBtn.textContent = '完成选择';
-        confirmBtn.addEventListener('click', () => exitSelectionMode(false));
+    const confirmBtn = document.createElement('button');
+    confirmBtn.id = 'ce-float-confirm-btn';
+    confirmBtn.className = 'ce-float-btn';
+    confirmBtn.textContent = '完成选择';
+    confirmBtn.addEventListener('click', () => exitSelectionMode(false));
 
-        bar.appendChild(cancelBtn);
-        bar.appendChild(confirmBtn);
-        document.body.appendChild(bar);
-    } else {
-        const bar = document.getElementById('ce-selection-bar');
-        bar.className = state.theme === 'light' ? 'theme-light' : 'theme-dark';
-        bar.style.display = 'flex';
-    }
+    document.body.appendChild(cancelBtn);
+    document.body.appendChild(confirmBtn);
 }
 
 function exitSelectionMode(isCancel = false) {
     state.selectionMode = false;
     document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
-    const bar = document.getElementById('ce-selection-bar');
-    if (bar) bar.style.display = 'none';
+
+    // 退出时彻底销毁按钮节点，不留残影
+    if (document.getElementById('ce-float-cancel-btn')) document.getElementById('ce-float-cancel-btn').remove();
+    if (document.getElementById('ce-float-confirm-btn')) document.getElementById('ce-float-confirm-btn').remove();
 
     if (isCancel) {
         state.selectedMesIds.clear();
@@ -1048,7 +1050,6 @@ async function doExport() {
             await exportToImage(messages);
         }
 
-        // 导出完成后清空选中状态并更新界面
         state.selectedMesIds.clear();
         updateSelInfo();
 
@@ -1159,9 +1160,9 @@ function createMenuButton() {
 /* ===================== 初始化 ===================== */
 
 jQuery(async function () {
-    console.log('[ChatExporter] v2.8 开始加载...');
+    console.log('[ChatExporter] v2.9 开始加载...');
     injectStyles();
     createPanel();
     createMenuButton();
-    console.log('[ChatExporter] v2.8 加载完成');
+    console.log('[ChatExporter] v2.9 加载完成');
 });
