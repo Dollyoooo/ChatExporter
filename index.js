@@ -2,7 +2,7 @@ import { getContext } from '../../../extensions.js';
 import { executeSlashCommands } from '../../../slash-commands/SlashCommandParser.js';
 
 // ================================================================
-//  Chat Exporter v2.9 — 聊天记录导出器 (江窈专属完美优化版)
+//  Chat Exporter v2.9 — 聊天记录导出器
 // ================================================================
 
 const state = {
@@ -1128,37 +1128,26 @@ async function exportToImage(messages) {
 }
 
 /* ===================== 扩展菜单按钮 ===================== */
-
 function createMenuButton() {
-    // 采用全局监听机制，对抗酒馆原生菜单的动态重置
-    document.addEventListener('click', function(e) {
-        const trigger = document.getElementById('extensionsMenuButton');
-
-        // 当监测到你点击了顶部的魔杖图标时
-        if (trigger && (e.target === trigger || trigger.contains(e.target))) {
-
-            // 延迟100毫秒，等待酒馆的原生菜单彻底生成完毕
-            setTimeout(() => {
-                const menu = document.getElementById('extensionsMenu');
-
-                // 如果菜单存在，且我们的按钮还没插进去，就强行挂载
-                if (menu && !document.getElementById('ce-ext-menu-item')) {
-                    const item = document.createElement('div');
-                    item.id = 'ce-ext-menu-item';
-                    item.className = 'list-group-item flex-container flexGap5';
-                    item.innerHTML = '<div class="fa-solid fa-file-export extensionsMenuExtensionButton"></div><span>聊天导出</span>';
-
-                    item.addEventListener('click', function () {
-                        if (trigger) trigger.click(); // 点击后收起原生菜单
-                        openPanel(); // 展开导出面板
-                    });
-
-                    // 强制插入到菜单最顶部
-                    menu.prepend(item);
-                }
-            }, 100);
+    const injectItem = () => {
+        const menu = document.getElementById('extensionsMenu');
+        if (menu && !document.getElementById('ce-ext-menu-item')) {
+            const item = document.createElement('div');
+            item.id = 'ce-ext-menu-item';
+            item.className = 'list-group-item flex-container flexGap5';
+            item.style.cursor = 'pointer';
+            item.innerHTML = '<div class="fa-solid fa-file-export extensionsMenuExtensionButton"></div><span>聊天导出</span>';
+            item.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const trigger = document.getElementById('extensionsMenuButton');
+                if (trigger) trigger.click();
+                openPanel();
+            });
+            menu.prepend(item);
         }
-    }, true);
+    };
+
+    new MutationObserver(injectItem).observe(document.body, { childList: true, subtree: true });
 }
 
 /* ===================== 初始化 ===================== */
