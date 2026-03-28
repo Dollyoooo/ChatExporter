@@ -1,7 +1,8 @@
 import { getContext } from '../../../extensions.js';
+import { executeSlashCommands } from '../../../slash-commands/SlashCommandParser.js'; // 核心：引入酒馆原生斜杠命令处理器
 
 // ================================================================
-//  Chat Exporter v2.8 — 聊天记录导出器
+//  Chat Exporter v2.9 — 聊天记录导出器
 // ================================================================
 
 const state = {
@@ -15,7 +16,7 @@ const state = {
     selectMethod: 'manual',
     selectionMode: false,
     theme: 'light',
-    compressLevel: '1.0' // 图片压缩等级 (默认不压缩)
+    compressLevel: '1.0'
 };
 
 const PRESET_COLORS = [
@@ -71,13 +72,10 @@ function injectStyles() {
     position:fixed; top:0; left:0; width:100vw; height:100vh;
     background:rgba(0,0,0,0.7); z-index:2147483640;
     opacity:0; pointer-events:none; transition:opacity .2s ease;
-    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
+    display: none;
 }
 #ce-search-overlay { z-index:2147483645; }
-#ce-overlay.open, #ce-search-overlay.open {
-    opacity:1; pointer-events:auto;
-    display: block; /* 修复：打开时显示 */
-}
+#ce-overlay.open, #ce-search-overlay.open { opacity:1; pointer-events:auto; display: block; }
 
 /* ===== 面板基础 ===== */
 #ce-panel {
@@ -88,15 +86,10 @@ function injectStyles() {
     z-index:2147483641; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
     font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
-    font-size:13px;
-    opacity:0; pointer-events:none;
-    transition:opacity .2s ease;
-    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
+    font-size:13px; opacity:0; pointer-events:none;
+    transition:opacity .2s ease; display: none;
 }
-#ce-panel.open {
-    opacity:1; pointer-events:auto;
-    display: flex; /* 修复：打开时显示 */
-}
+#ce-panel.open { opacity:1; pointer-events:auto; display: flex; }
 
 /* ===== 搜索弹窗 ===== */
 #ce-search-panel {
@@ -107,19 +100,23 @@ function injectStyles() {
     z-index:2147483646; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
     font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
-    opacity:0; pointer-events:none;
-    transition:opacity .2s ease;
-    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
+    opacity:0; pointer-events:none; transition:opacity .2s ease; display: none;
 }
-#ce-search-panel.open {
-    opacity:1; pointer-events:auto;
-    display: flex; /* 修复：打开时显示 */
-}
+#ce-search-panel.open { opacity:1; pointer-events:auto; display: flex; }
 
-/* ===== 手机/平板适配 ===== */
+/* ===== 手机/平板适配增强 ===== */
 @media (max-width:768px) {
     .ce-style-cards { display:grid !important; grid-template-columns:1fr 1fr !important; }
     .ce-color-row { flex-wrap:wrap !important; }
+    /* 修复搜索框手机端显示一半的问题 */
+    #ce-search-panel {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        height: 75vh !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
 }
 
 /* ===== 日间主题 (纯白) ===== */
@@ -143,7 +140,7 @@ function injectStyles() {
 #ce-panel.theme-light .ce-target-btn.active, #ce-panel.theme-light .ce-picker-tab.active { background:#000000; color:#ffffff; }
 #ce-panel.theme-light .ce-export-row { background:#ffffff; border-top:1px solid #eeeeee; }
 /* 搜索专属 - 日间 */
-#ce-search-panel.theme-light .ce-search-input { background:#f0f2f5; color:#000000; }
+#ce-search-panel.theme-light .ce-search-input { background:#f0f2f5; color:#000000; border:1px solid #ccc; }
 #ce-search-panel.theme-light .ce-search-close { color:#000000; opacity:0.6; }
 #ce-search-panel.theme-light .ce-search-close:hover { opacity:1; }
 #ce-search-panel.theme-light .ce-search-item { background:#f9f9f9; border:1px solid #eeeeee; }
@@ -182,19 +179,28 @@ function injectStyles() {
 
 /* ===== 通用组件 ===== */
 .ce-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; font-size:15px; font-weight:bold; flex-shrink:0; }
+.ce-search-header { display:flex; gap:10px; align-items:center; padding:16px 20px; flex-shrink:0; }
+.ce-search-input { flex:1; padding:8px 12px; border-radius:6px; outline:none; font-size:14px; }
+.ce-search-count { font-size:12px; white-space:nowrap; }
+.ce-search-close { cursor:pointer; font-size:24px; font-weight:bold; padding:0 5px; }
+.ce-search-body { flex:1; overflow-y:auto; padding:10px; }
+.ce-search-item { padding:12px; margin-bottom:10px; border-radius:8px; cursor:pointer; transition:background .2s; }
+.ce-search-item-header { font-size:12px; font-weight:bold; margin-bottom:6px; }
+.ce-search-item-text { font-size:13px; line-height:1.5; word-break:break-all; }
+
 .ce-theme-btn { padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; }
 .ce-close { cursor:pointer; font-size:20px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
 .ce-body { padding:16px 20px; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; }
-.ce-body::-webkit-scrollbar { width:6px; }
-.ce-body::-webkit-scrollbar-track { background:transparent; }
-.ce-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
+.ce-body::-webkit-scrollbar, .ce-search-body::-webkit-scrollbar { width:6px; }
+.ce-body::-webkit-scrollbar-track, .ce-search-body::-webkit-scrollbar-track { background:transparent; }
+.ce-body::-webkit-scrollbar-thumb, .ce-search-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
 .ce-section { margin-bottom:18px; padding:14px; border-radius:8px; }
 .ce-section-title { font-size:13px; font-weight:bold; margin-bottom:12px; }
 .ce-radio-group { display:flex; gap:14px; flex-wrap:wrap; }
 .ce-radio-group label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; }
 .ce-input { width:100%; padding:10px 12px; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box; }
-.ce-number-input { width:80px; padding:8px; border-radius:6px; font-size:13px; outline:none; text-align:center; box-sizing:border-box; }
-.ce-btn { padding:10px 16px; border-radius:6px; cursor:pointer; font-size:13px; transition:all .2s; user-select:none; font-weight:bold; }
+.ce-number-input { width:70px; padding:8px; border-radius:6px; font-size:13px; outline:none; text-align:center; box-sizing:border-box; }
+.ce-btn { padding:10px 16px; border-radius:6px; cursor:pointer; font-size:13px; transition:all .2s; user-select:none; font-weight:bold; display:flex; align-items:center; justify-content:center; }
 .ce-style-cards { display:flex; gap:10px; flex-wrap:wrap; }
 .ce-style-card { flex:1; min-width:85px; padding:12px 8px; border-radius:8px; text-align:center; cursor:pointer; transition:all .2s; }
 .ce-style-preview { width:100%; height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:16px; margin-bottom:8px; border:1px solid #ccc; }
@@ -240,13 +246,13 @@ function injectStyles() {
 .ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
 .ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
-/* ===== 完成选择按钮 (绝对保证可见, 高度上调防遮挡) ===== */
+/* ===== 完成选择按钮 ===== */
 #ce-confirm-select-btn {
     position:fixed !important; bottom:120px !important; left:50% !important;
     transform:translateX(-50%) !important;
     padding:16px 40px !important; border-radius:30px !important;
     font-size:16px !important; font-weight:bold !important; cursor:pointer !important;
-    z-index:2147483647 !important; /* 最高层级 */
+    z-index:2147483647 !important;
     box-shadow:0 8px 24px rgba(0,0,0,0.5) !important;
 }
 #ce-confirm-select-btn.theme-light { background:#000000 !important; color:#ffffff !important; border:1px solid #000000 !important; }
@@ -276,7 +282,7 @@ function injectStyles() {
 .ce-export-warm-note .ce-msg:last-child { margin-bottom:0; }
 .ce-export-warm-note .ce-msg-name { font-weight:bold; color:#8b6c2a; margin-bottom:6px; font-size:13px; }
 
-/* ===== 手机版排版优化 (覆盖基础样式) ===== */
+/* ===== 手机版排版优化 ===== */
 .ce-layout-mobile { font-size:16px !important; }
 .ce-layout-mobile.ce-export-default { padding:20px; }
 .ce-layout-mobile.ce-export-white-card { padding:16px; }
@@ -304,15 +310,32 @@ function createPanel() {
             </div>
         </div>
         <div class="ce-body">
-            <div class="ce-section" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="ce-section" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span>快速跳转</span>
-                <input type="number" class="ce-number-input" id="ce-jump-input" placeholder="楼层" min="1">
-                <button class="ce-btn" id="ce-jump-btn">跳转</button>
+                <input type="number" class="ce-number-input" id="ce-jump-input" placeholder="楼层" min="1" style="width:60px;">
+                <button class="ce-btn" id="ce-jump-btn" style="padding:10px;">跳转</button>
+                <button class="ce-btn" id="ce-top-btn" title="回到顶部" style="padding:10px;">⬆️</button>
+                <button class="ce-btn" id="ce-bottom-btn" title="回到底部" style="padding:10px;">⬇️</button>
                 <div style="flex:1"></div>
-                <button class="ce-btn" id="ce-open-search-btn">搜索消息</button>
+                <button class="ce-btn" id="ce-open-search-btn">🔍 搜索消息</button>
             </div>
+
             <div class="ce-section">
-                <div class="ce-section-title">消息选择</div>
+                <div class="ce-section-title">消息隐藏 / 显示控制台</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <span>范围：</span>
+                    <input type="number" class="ce-number-input" id="ce-hide-start" placeholder="起始" min="0">
+                    <span>至</span>
+                    <input type="number" class="ce-number-input" id="ce-hide-end" placeholder="结束" min="0">
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="ce-btn" id="ce-hide-btn" style="flex:1;">👻 隐藏所选</button>
+                    <button class="ce-btn" id="ce-unhide-btn" style="flex:1;">👀 显示所选</button>
+                </div>
+            </div>
+
+            <div class="ce-section">
+                <div class="ce-section-title">消息导出选择</div>
                 <div class="ce-radio-group">
                     <label><input type="radio" name="ce-sel-method" value="manual" checked> 手动勾选</label>
                     <label><input type="radio" name="ce-sel-method" value="range"> 按楼层范围</label>
@@ -333,6 +356,7 @@ function createPanel() {
                     </div>
                 </div>
             </div>
+
             <div class="ce-section">
                 <div class="ce-section-title">标签过滤</div>
                 <input type="text" class="ce-input" id="ce-tags-input" placeholder="标签名，如 thinking（留空不过滤）">
@@ -443,7 +467,6 @@ function createPanel() {
             <div class="ce-search-close" id="ce-search-close">×</div>
         </div>
         <div class="ce-search-body" id="ce-search-results">
-            <!-- 搜索结果在这里显示 -->
         </div>
     </div>
     `;
@@ -479,6 +502,7 @@ function setupPanelEvents() {
     document.getElementById('ce-close-btn').addEventListener('click', closePanel);
     document.getElementById('ce-overlay').addEventListener('click', closePanel);
 
+    // 跳转逻辑
     document.getElementById('ce-jump-btn').addEventListener('click', function () {
         const floor = parseInt(document.getElementById('ce-jump-input').value);
         if (!floor || floor < 1) return;
@@ -491,6 +515,37 @@ function setupPanelEvents() {
         }
     });
 
+    // 顶部与底部跳转按钮
+    document.getElementById('ce-top-btn').addEventListener('click', function() {
+        const chat = document.getElementById('chat');
+        if (chat) { chat.scrollTo({ top: 0, behavior: 'smooth' }); closePanel(); }
+    });
+    document.getElementById('ce-bottom-btn').addEventListener('click', function() {
+        const chat = document.getElementById('chat');
+        if (chat) { chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' }); closePanel(); }
+    });
+
+    // 隐藏和显示逻辑集成
+    document.getElementById('ce-hide-btn').addEventListener('click', async function () {
+        const start = document.getElementById('ce-hide-start').value;
+        const end = document.getElementById('ce-hide-end').value;
+        if (!start || !end) return alert('江窈宝宝，请把起始和结束的层数都填上哦！');
+        try {
+            await executeSlashCommands(\`/hide \${start}-\${end}\`);
+            closePanel();
+        } catch(e) { console.error(e); }
+    });
+
+    document.getElementById('ce-unhide-btn').addEventListener('click', async function () {
+        const start = document.getElementById('ce-hide-start').value;
+        const end = document.getElementById('ce-hide-end').value;
+        if (!start || !end) return alert('江窈宝宝，请把起始和结束的层数都填上哦！');
+        try {
+            await executeSlashCommands(\`/unhide \${start}-\${end}\`);
+            closePanel();
+        } catch(e) { console.error(e); }
+    });
+
     document.querySelectorAll('input[name="ce-sel-method"]').forEach(r => {
         r.addEventListener('change', function () {
             state.selectMethod = this.value;
@@ -500,7 +555,7 @@ function setupPanelEvents() {
     });
 
     document.getElementById('ce-sel-btn').addEventListener('click', function () {
-        state.selectedMesIds.clear(); // 每次开启选择前自动清空旧记忆
+        state.selectedMesIds.clear();
         enterSelectionMode();
     });
 
@@ -516,15 +571,10 @@ function setupPanelEvents() {
     });
 
     document.querySelectorAll('input[name="ce-layout"]').forEach(r => {
-        r.addEventListener('change', function () {
-            state.exportLayout = this.value;
-        });
+        r.addEventListener('change', function () { state.exportLayout = this.value; });
     });
-
     document.querySelectorAll('input[name="ce-compress"]').forEach(r => {
-        r.addEventListener('change', function () {
-            state.compressLevel = this.value; // 保存图片压缩档次
-        });
+        r.addEventListener('change', function () { state.compressLevel = this.value; });
     });
 
     document.querySelectorAll('.ce-style-card').forEach(card => {
@@ -607,7 +657,6 @@ function setupSearchPanelEvents() {
     const searchResults = document.getElementById('ce-search-results');
     const searchCount = document.getElementById('ce-search-count');
 
-    // 打开搜索弹窗
     document.getElementById('ce-open-search-btn').addEventListener('click', function () {
         searchOverlay.classList.add('open');
         searchPanel.classList.add('open');
@@ -617,7 +666,6 @@ function setupSearchPanelEvents() {
         setTimeout(() => searchInput.focus(), 100);
     });
 
-    // 关闭搜索弹窗
     const closeSearch = () => {
         searchOverlay.classList.remove('open');
         searchPanel.classList.remove('open');
@@ -625,7 +673,6 @@ function setupSearchPanelEvents() {
     document.getElementById('ce-search-close').addEventListener('click', closeSearch);
     searchOverlay.addEventListener('click', closeSearch);
 
-    // 实时搜索逻辑
     searchInput.addEventListener('input', function () {
         const keyword = this.value.trim().toLowerCase();
         searchResults.innerHTML = '';
@@ -640,13 +687,12 @@ function setupSearchPanelEvents() {
 
         allMes.forEach((mes, idx) => {
             const textEl = mes.querySelector('.mes_text');
-            if (!textEl) return; // 只要有聊天内容，就绝对不跳过！
+            if (!textEl) return;
 
-            // 修复：优先从酒馆底层数据获取名字，没有DOM元素也不怕漏掉用户消息
             let name = "User";
             const context = typeof getContext === 'function' ? getContext() : null;
             const chatArray = context ? context.chat : [];
-            const mesId = mes.getAttribute('mesid'); // 从mes元素获取mesid
+            const mesId = mes.getAttribute('mesid');
             if (chatArray && chatArray[mesId] && chatArray[mesId].name) {
                 name = chatArray[mesId].name;
             } else {
@@ -654,7 +700,7 @@ function setupSearchPanelEvents() {
                 name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
             }
 
-            const text = textEl.innerText; // 获取纯文本，去掉HTML标签
+            const text = textEl.innerText;
 
             if (name.toLowerCase().includes(keyword) || text.toLowerCase().includes(keyword)) {
                 matchCount++;
@@ -664,23 +710,22 @@ function setupSearchPanelEvents() {
                 item.className = 'ce-search-item';
                 item.innerHTML = `
                     <div class="ce-search-item-header">
-                        <span>第 ${floor} 层 | ${name}</span>
+                        <span>第 \${floor} 层 | \${name}</span>
                     </div>
-                    <div class="ce-search-item-text">${text}</div>
+                    <div class="ce-search-item-text">\${text}</div>
                 `;
 
-                // 点击跳转
                 item.addEventListener('click', () => {
                     mes.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     closeSearch();
-                    closePanel(); // 跳转后顺便把主面板也关掉，让宝宝专心看消息
+                    closePanel();
                 });
 
                 searchResults.appendChild(item);
             }
         });
 
-        searchCount.textContent = `${matchCount} 条匹配`;
+        searchCount.textContent = \`\${matchCount} 条匹配\`;
     });
 }
 
@@ -798,9 +843,12 @@ function syncSlidersFromState() {
 function enterSelectionMode() {
     state.selectionMode = true;
     closePanel();
+
+    // 修复多选框重叠：严防死守，先彻底清理可能残留的旧复选框
+    document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
+
     const allMes = document.querySelectorAll('#chat .mes');
     allMes.forEach(mes => {
-        if (mes.querySelector('.ce-checkbox')) return;
         const mesId = mes.getAttribute('mesid');
         const cb = document.createElement('input');
         cb.type = 'checkbox';
@@ -815,6 +863,7 @@ function enterSelectionMode() {
         mes.style.position = 'relative';
         mes.insertBefore(cb, mes.firstChild);
     });
+
     if (!document.getElementById('ce-confirm-select-btn')) {
         const btn = document.createElement('button');
         btn.id = 'ce-confirm-select-btn';
@@ -856,9 +905,8 @@ function collectMessages() {
     const processMes = (mes) => {
         const mesId = mes.getAttribute('mesid');
         const textEl = mes.querySelector('.mes_text');
-        if (!textEl) return; // 只要有聊天内容，就绝对不跳过！
+        if (!textEl) return;
 
-        // 修复：优先从酒馆底层数据获取名字，没有DOM元素也不怕漏掉用户消息
         let name = "User";
         if (chatArray && chatArray[mesId] && chatArray[mesId].name) {
             name = chatArray[mesId].name;
@@ -918,7 +966,7 @@ function collectMessages() {
             });
 
             if (filterMode === '2') {
-                processedText = keptText.join('\n\n');
+                processedText = keptText.join('\\n\\n');
             }
         }
 
@@ -936,13 +984,13 @@ function collectMessages() {
                 } else {
                     finalHtml = processedText
                         .replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>')
-                        .replace(/\n/g, '<br>');
+                        .replace(/\\n/g, '<br>');
                 }
             } catch(e) {
-                finalHtml = processedText.replace(/\n/g, '<br>');
+                finalHtml = processedText.replace(/\\n/g, '<br>');
             }
         } else if (filterMode === '2' && !msg.hasRaw) {
-             finalHtml = processedText.replace(/\n/g, '<br>');
+             finalHtml = processedText.replace(/\\n/g, '<br>');
         }
 
         const tempDiv = document.createElement('div');
@@ -969,6 +1017,13 @@ function doExport() {
         } else {
             exportToImage(messages);
         }
+
+        // 修复：导出完成后自动重置所选消息
+        if (state.selectMethod === 'manual') {
+            state.selectedMesIds.clear();
+            updateSelInfo();
+        }
+
     } catch (e) {
         console.error('[ChatExporter] 导出出错:', e);
         alert('导出时发生错误: ' + e.message);
@@ -978,7 +1033,7 @@ function doExport() {
 function exportToTxt(messages) {
     let content = '';
     messages.forEach(msg => {
-        content += msg.name + ':\n' + msg.text + '\n\n';
+        content += msg.name + ':\\n' + msg.text + '\\n\\n';
     });
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const a = document.createElement('a');
@@ -1000,7 +1055,6 @@ async function exportToImage(messages) {
     const container = document.createElement('div');
     container.id = 'ce-render-container';
 
-    // 动态应用宽度设置
     container.style.width = state.exportLayout === 'mobile' ? '450px' : '800px';
 
     let baseClass = '';
@@ -1015,7 +1069,6 @@ async function exportToImage(messages) {
             break;
     }
 
-    // 如果是手机版排版，追加修饰类名
     if (state.exportLayout === 'mobile') {
         baseClass += ' ce-layout-mobile';
     }
@@ -1038,7 +1091,6 @@ async function exportToImage(messages) {
         });
         const a = document.createElement('a');
 
-        // 动态判断压缩等级
         if (state.compressLevel === '1.0') {
             a.href = canvas.toDataURL('image/png');
             a.download = 'chat_export_' + Date.now() + '.png';
@@ -1079,9 +1131,9 @@ function createMenuButton() {
 /* ===================== 初始化 ===================== */
 
 jQuery(async function () {
-    console.log('[ChatExporter] v2.8 开始加载...');
+    console.log('[ChatExporter] v2.9 开始加载...');
     injectStyles();
     createPanel();
     createMenuButton();
-    console.log('[ChatExporter] v2.8 加载完成');
+    console.log('[ChatExporter] v2.9 加载完成');
 });
