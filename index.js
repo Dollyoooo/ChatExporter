@@ -115,10 +115,10 @@ function injectStyles() {
     opacity:1; pointer-events:auto;
     display: flex;
 }
-.ce-search-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; flex-shrink:0; gap:10px; }
-.ce-search-input { flex:1; padding:8px 12px; border-radius:6px; outline:none; font-size:14px; border:1px solid transparent; }
-.ce-search-count { font-size:12px; white-space:nowrap; }
-.ce-search-close { font-size:24px; cursor:pointer; padding:0 5px; line-height:1; }
+.ce-search-header { display:flex; justify-content:flex-start; align-items:center; padding:12px 16px; flex-shrink:0; gap:12px; border-bottom:1px solid rgba(128,128,128,0.2); }
+.ce-search-close { font-size:20px; cursor:pointer; padding:4px; line-height:1; color:#888; display:flex; align-items:center; justify-content:center; }
+.ce-search-input { flex:1; min-width:0; padding:8px 12px; border-radius:6px; outline:none; font-size:14px; border:1px solid transparent; }
+.ce-search-count { font-size:12px; white-space:nowrap; flex-shrink:0; opacity:0.8; }
 .ce-search-body { flex:1; overflow-y:auto; padding:12px 16px; -webkit-overflow-scrolling:touch; }
 .ce-search-body::-webkit-scrollbar { width:6px; }
 .ce-search-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
@@ -127,152 +127,41 @@ function injectStyles() {
 .ce-search-item-text { font-size:13px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .ce-search-highlight { color:#ff4d4f; font-weight:bold; background:rgba(255,77,79,0.1); border-radius:2px; padding:0 2px; }
 
-/* ===== 手机/平板适配 ===== */
-@media (max-width:768px) {
-    .ce-style-cards { display:grid !important; grid-template-columns:1fr 1fr !important; }
-    .ce-color-row { flex-wrap:wrap !important; }
-}
-
-/* ===== 日间主题 (纯白) ===== */
-#ce-panel.theme-light, #ce-search-panel.theme-light { background:#ffffff; color:#000000; border:1px solid #cccccc; }
-#ce-panel.theme-light .ce-header, #ce-search-panel.theme-light .ce-search-header { background:#ffffff; border-bottom:1px solid #eeeeee; }
-#ce-panel.theme-light .ce-close { color:#000000; }
-#ce-panel.theme-light .ce-close:hover { background:#f0f0f0; }
-#ce-panel.theme-light .ce-theme-btn { background:#f0f0f0; color:#000000; border:1px solid #cccccc; }
-#ce-panel.theme-light .ce-section { background:#ffffff; border:1px solid #eeeeee; }
-#ce-panel.theme-light .ce-section-title { color:#000000; }
-#ce-panel.theme-light .ce-input,
-#ce-panel.theme-light .ce-number-input,
-#ce-panel.theme-light .ce-hex-input { background:#ffffff; border:1px solid #cccccc; color:#000000; }
-#ce-panel.theme-light .ce-btn { background:#f0f0f0; border:1px solid #cccccc; color:#000000; }
-#ce-panel.theme-light .ce-btn:hover { background:#e0e0e0; }
-#ce-panel.theme-light .ce-btn-primary { background:#000000; color:#ffffff; border-color:#000000; }
-#ce-panel.theme-light .ce-btn-primary:hover { background:#333333; }
-#ce-panel.theme-light .ce-style-card { background:#ffffff; border:2px solid #eeeeee; }
-#ce-panel.theme-light .ce-style-card.active { border-color:#000000; background:#f9f9f9; }
-#ce-panel.theme-light .ce-target-btn, #ce-panel.theme-light .ce-picker-tab { background:#f0f0f0; border:1px solid #cccccc; color:#000000; }
-#ce-panel.theme-light .ce-target-btn.active, #ce-panel.theme-light .ce-picker-tab.active { background:#000000; color:#ffffff; }
-#ce-panel.theme-light .ce-export-row { background:#ffffff; border-top:1px solid #eeeeee; }
-/* 搜索专属 - 日间 */
-#ce-search-panel.theme-light .ce-search-input { background:#f0f2f5; color:#000000; }
-#ce-search-panel.theme-light .ce-search-close { color:#000000; opacity:0.6; }
-#ce-search-panel.theme-light .ce-search-close:hover { opacity:1; }
-#ce-search-panel.theme-light .ce-search-item { background:#f9f9f9; border:1px solid #eeeeee; }
-#ce-search-panel.theme-light .ce-search-item-header { color:#555; }
-#ce-search-panel.theme-light .ce-search-item-text { color:#222; }
-#ce-search-panel.theme-light .ce-search-item:hover { background:#f0f2f5; border-color:#ccc; }
-
-/* ===== 夜间主题 (纯黑) ===== */
-#ce-panel.theme-dark, #ce-search-panel.theme-dark { background:#000000; color:#ffffff; border:1px solid #333333; }
-#ce-panel.theme-dark .ce-header, #ce-search-panel.theme-dark .ce-search-header { background:#000000; border-bottom:1px solid #333333; }
-#ce-panel.theme-dark .ce-close { color:#ffffff; }
-#ce-panel.theme-dark .ce-close:hover { background:#222222; }
-#ce-panel.theme-dark .ce-theme-btn { background:#222222; color:#ffffff; border:1px solid #444444; }
-#ce-panel.theme-dark .ce-section { background:#000000; border:1px solid #222222; }
-#ce-panel.theme-dark .ce-section-title { color:#ffffff; }
-#ce-panel.theme-dark .ce-input,
-#ce-panel.theme-dark .ce-number-input,
-#ce-panel.theme-dark .ce-hex-input { background:#000000; border:1px solid #444444; color:#ffffff; }
-#ce-panel.theme-dark .ce-btn { background:#222222; border:1px solid #444444; color:#ffffff; }
-#ce-panel.theme-dark .ce-btn:hover { background:#333333; }
-#ce-panel.theme-dark .ce-btn-primary { background:#ffffff; color:#000000; border-color:#ffffff; }
-#ce-panel.theme-dark .ce-btn-primary:hover { background:#cccccc; }
-#ce-panel.theme-dark .ce-style-card { background:#000000; border:2px solid #222222; }
-#ce-panel.theme-dark .ce-style-card.active { border-color:#ffffff; background:#111111; }
-#ce-panel.theme-dark .ce-target-btn, #ce-panel.theme-dark .ce-picker-tab { background:#222222; border:1px solid #444444; color:#ffffff; }
-#ce-panel.theme-dark .ce-target-btn.active, #ce-panel.theme-dark .ce-picker-tab.active { background:#ffffff; color:#000000; }
-#ce-panel.theme-dark .ce-export-row { background:#000000; border-top:1px solid #333333; }
-/* 搜索专属 - 夜间 */
-#ce-search-panel.theme-dark .ce-search-input { background:#1a1a1a; color:#ffffff; border:1px solid #333; }
-#ce-search-panel.theme-dark .ce-search-close { color:#ffffff; opacity:0.6; }
-#ce-search-panel.theme-dark .ce-search-close:hover { opacity:1; }
-#ce-search-panel.theme-dark .ce-search-item { background:#111111; border:1px solid #333333; }
-#ce-search-panel.theme-dark .ce-search-item-header { color:#aaa; }
-#ce-search-panel.theme-dark .ce-search-item-text { color:#eee; }
-#ce-search-panel.theme-dark .ce-search-item:hover { background:#1a1a1a; border-color:#555; }
-
-/* ===== 通用组件 ===== */
-.ce-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; font-size:15px; font-weight:bold; flex-shrink:0; }
-.ce-theme-btn { padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; }
-.ce-close { cursor:pointer; font-size:20px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
-.ce-body { padding:16px 20px; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; }
-.ce-body::-webkit-scrollbar { width:6px; }
-.ce-body::-webkit-scrollbar-track { background:transparent; }
-.ce-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
-.ce-section { margin-bottom:18px; padding:14px; border-radius:8px; }
-.ce-section-title { font-size:13px; font-weight:bold; margin-bottom:12px; }
-.ce-radio-group { display:flex; gap:14px; flex-wrap:wrap; }
-.ce-radio-group label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; }
-.ce-input { width:100%; padding:10px 12px; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box; }
-.ce-number-input { width:80px; padding:8px; border-radius:6px; font-size:13px; outline:none; text-align:center; box-sizing:border-box; }
-.ce-btn { padding:10px 16px; border-radius:6px; cursor:pointer; font-size:13px; transition:all .2s; user-select:none; font-weight:bold; }
-.ce-style-cards { display:flex; gap:10px; flex-wrap:wrap; }
-.ce-style-card { flex:1; min-width:85px; padding:12px 8px; border-radius:8px; text-align:center; cursor:pointer; transition:all .2s; }
-.ce-style-preview { width:100%; height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:16px; margin-bottom:8px; border:1px solid #ccc; }
-.ce-style-card span { font-size:12px; font-weight:bold; }
-.ce-color-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
-.ce-hex-input { width:80px; padding:8px; border-radius:6px; font-size:12px; font-family:monospace; outline:none; box-sizing:border-box; }
-.ce-swatch { width:32px; height:32px; border-radius:6px; border:1px solid #888; cursor:pointer; flex-shrink:0; }
-.ce-target-btns { display:flex; gap:8px; margin-bottom:12px; }
-.ce-target-btn { flex:1; padding:10px; border-radius:6px; cursor:pointer; font-size:12px; text-align:center; font-weight:bold; }
-.ce-picker-tabs { display:flex; gap:6px; margin-bottom:10px; }
-.ce-picker-tab { flex:1; padding:8px; border-radius:6px; cursor:pointer; font-size:12px; text-align:center; font-weight:bold; }
-.ce-picker-pane { display:none; }
-.ce-picker-pane.active { display:block; }
-.ce-color-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
-.ce-grid-swatch { aspect-ratio:1; border-radius:4px; cursor:pointer; border:1px solid #888; box-sizing:border-box; }
-#ce-spectrum { width:100%; height:150px; border-radius:6px; cursor:crosshair; border:1px solid #888; display:block; }
-.ce-slider-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-.ce-slider-row label { font-size:13px; font-weight:bold; width:14px; text-align:center; }
-.ce-slider-row input[type="range"] { flex:1; height:6px; }
-.ce-slider-val { font-size:12px; font-family:monospace; width:30px; text-align:right; }
-.ce-export-row { padding:16px 20px; display:flex; justify-content:center; flex-shrink:0; }
-
-/* ===== 自定义圆形复选框 ===== */
-.ce-checkbox {
-    appearance:none !important; -webkit-appearance:none !important;
-    position:absolute !important; left:10px !important; top:12px !important;
-    width:24px !important; height:24px !important;
-    border-radius:50% !important;
-    border:2px solid #888888 !important;
-    cursor:pointer !important; margin:0 !important;
-    z-index:2147483635 !important;
-    background:transparent !important;
-    background-image:none !important; /* 修复重叠 */
-    transition:all .2s;
-}
-.ce-checkbox::before { display: none !important; content: none !important; } /* 修复重叠 */
-.ce-checkbox.theme-light:checked { background:#000000 !important; border-color:#000000 !important; }
-.ce-checkbox.theme-dark:checked { background:#ffffff !important; border-color:#ffffff !important; }
-.ce-checkbox:checked::after {
-    content:''; position:absolute;
-    left:7px; top:3px; width:6px; height:11px;
-    border:solid; border-width:0 2px 2px 0;
-    transform:rotate(45deg);
-}
-.ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
-.ce-checkbox.theme-dark:checked::after { border-color:#000000; }
-
-/* ===== 完成选择按钮 (移动端完美适配防遮挡) ===== */
-#ce-confirm-select-btn {
-    position:fixed !important; bottom:60px !important; left:50% !important;
+/* ===== 多选模式底部操作栏 (绝对防遮挡双按钮) ===== */
+#ce-selection-bar {
+    position:fixed !important; bottom:10vh !important; left:50% !important;
     transform:translateX(-50%) !important;
-    padding:16px 40px !important; border-radius:30px !important;
-    font-size:16px !important; font-weight:bold !important; cursor:pointer !important;
+    display:flex !important; gap:16px !important;
     z-index:2147483647 !important;
+    padding:12px 24px !important;
+    border-radius:30px !important;
     box-shadow:0 8px 24px rgba(0,0,0,0.5) !important;
     width:max-content !important;
 }
-@media (max-width:768px) {
-    #ce-confirm-select-btn {
-        bottom:15vh !important; /* 手机端改为百分比高度，躲避输入法和工具栏 */
-        width:80% !important;
-        text-align:center !important;
-    }
-}
+#ce-selection-bar.theme-light { background:#ffffff !important; border:1px solid #eeeeee !important; }
+#ce-selection-bar.theme-dark { background:#222222 !important; border:1px solid #444444 !important; }
 
-#ce-confirm-select-btn.theme-light { background:#000000 !important; color:#ffffff !important; border:1px solid #000000 !important; }
-#ce-confirm-select-btn.theme-dark { background:#ffffff !important; color:#000000 !important; border:1px solid #ffffff !important; }
+.ce-sel-bar-btn {
+    padding:12px 24px !important; border-radius:20px !important;
+    font-size:15px !important; font-weight:bold !important; cursor:pointer !important;
+    border:none !important; outline:none !important; transition:opacity 0.2s !important;
+}
+.ce-sel-bar-btn:active { opacity:0.8 !important; }
+.ce-sel-btn-cancel { background:#f0f0f0 !important; color:#333 !important; }
+.ce-sel-btn-confirm { background:#000000 !important; color:#ffffff !important; }
+#ce-selection-bar.theme-dark .ce-sel-btn-cancel { background:#444444 !important; color:#fff !important; }
+#ce-selection-bar.theme-dark .ce-sel-btn-confirm { background:#ffffff !important; color:#000000 !important; }
+
+@media (max-width:768px) {
+    #ce-selection-bar {
+        bottom:12vh !important; /* 拉高防遮挡 */
+        width:85vw !important;
+        justify-content:space-between !important;
+        padding:12px 16px !important;
+        box-sizing:border-box !important;
+    }
+    .ce-sel-bar-btn { padding:12px 10px !important; flex:1 !important; text-align:center !important; margin:0 6px !important; }
+}
 
 /* ===== 渲染容器基础 ===== */
 #ce-render-container { position:absolute; top:-99999px; left:-99999px; }
@@ -334,14 +223,6 @@ function createPanel() {
                 <button class="ce-btn" id="ce-jump-bottom-btn">回底</button>
                 <div style="flex:1"></div>
                 <button class="ce-btn" id="ce-open-search-btn">搜索消息</button>
-            </div>
-            <div class="ce-section" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <span>消息隐藏与显示</span>
-                <input type="number" class="ce-number-input" id="ce-hide-start" placeholder="起始" min="1">
-                <span>至</span>
-                <input type="number" class="ce-number-input" id="ce-hide-end" placeholder="结束" min="1">
-                <button class="ce-btn" id="ce-hide-btn">隐藏</button>
-                <button class="ce-btn" id="ce-show-btn">显示</button>
             </div>
             <div class="ce-section">
                 <div class="ce-section-title">消息选择</div>
@@ -470,9 +351,9 @@ function createPanel() {
     <div id="ce-search-overlay"></div>
     <div id="ce-search-panel" class="theme-light">
         <div class="ce-search-header">
+            <div class="ce-search-close" id="ce-search-close">❮</div>
             <input type="text" class="ce-search-input" id="ce-search-input" placeholder="输入关键字搜索...">
             <span class="ce-search-count" id="ce-search-count">0 条匹配</span>
-            <div class="ce-search-close" id="ce-search-close">×</div>
         </div>
         <div class="ce-search-body" id="ce-search-results">
             <!-- 搜索结果在这里显示 -->
@@ -533,30 +414,6 @@ function setupPanelEvents() {
         const chat = document.getElementById('chat');
         if (chat) chat.scrollTo({ top: chat.scrollHeight, behavior: 'instant' });
         closePanel();
-    });
-
-    document.getElementById('ce-hide-btn').addEventListener('click', function () {
-        const start = parseInt(document.getElementById('ce-hide-start').value);
-        const end = parseInt(document.getElementById('ce-hide-end').value);
-        if (!start || !end || start > end) return alert('请输入有效的楼层范围');
-        if (window.SlashCommandParser && window.SlashCommandParser.execute) {
-            window.SlashCommandParser.execute('/hide ' + start + '-' + end);
-            closePanel();
-        } else {
-            alert('调用失败，当前酒馆版本不支持此原生指令。');
-        }
-    });
-
-    document.getElementById('ce-show-btn').addEventListener('click', function () {
-        const start = parseInt(document.getElementById('ce-hide-start').value);
-        const end = parseInt(document.getElementById('ce-hide-end').value);
-        if (!start || !end || start > end) return alert('请输入有效的楼层范围');
-        if (window.SlashCommandParser && window.SlashCommandParser.execute) {
-            window.SlashCommandParser.execute('/unhide ' + start + '-' + end);
-            closePanel();
-        } else {
-            alert('调用失败，当前酒馆版本不支持此原生指令。');
-        }
     });
 
     document.querySelectorAll('input[name="ce-sel-method"]').forEach(r => {
@@ -905,25 +762,42 @@ function enterSelectionMode() {
         mes.style.position = 'relative';
         mes.insertBefore(cb, mes.firstChild);
     });
-    if (!document.getElementById('ce-confirm-select-btn')) {
-        const btn = document.createElement('button');
-        btn.id = 'ce-confirm-select-btn';
-        btn.className = state.theme === 'light' ? 'theme-light' : 'theme-dark';
-        btn.textContent = '完成选择';
-        btn.addEventListener('click', exitSelectionMode);
-        document.body.appendChild(btn);
+
+    if (!document.getElementById('ce-selection-bar')) {
+        const bar = document.createElement('div');
+        bar.id = 'ce-selection-bar';
+        bar.className = state.theme === 'light' ? 'theme-light' : 'theme-dark';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'ce-sel-bar-btn ce-sel-btn-cancel';
+        cancelBtn.textContent = '退出选择';
+        cancelBtn.addEventListener('click', () => exitSelectionMode(true));
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'ce-sel-bar-btn ce-sel-btn-confirm';
+        confirmBtn.textContent = '完成选择';
+        confirmBtn.addEventListener('click', () => exitSelectionMode(false));
+
+        bar.appendChild(cancelBtn);
+        bar.appendChild(confirmBtn);
+        document.body.appendChild(bar);
     } else {
-        const btn = document.getElementById('ce-confirm-select-btn');
-        btn.className = state.theme === 'light' ? 'theme-light' : 'theme-dark';
-        btn.style.display = '';
+        const bar = document.getElementById('ce-selection-bar');
+        bar.className = state.theme === 'light' ? 'theme-light' : 'theme-dark';
+        bar.style.display = 'flex';
     }
 }
 
-function exitSelectionMode() {
+function exitSelectionMode(isCancel = false) {
     state.selectionMode = false;
     document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
-    const confirmBtn = document.getElementById('ce-confirm-select-btn');
-    if (confirmBtn) confirmBtn.style.display = 'none';
+    const bar = document.getElementById('ce-selection-bar');
+    if (bar) bar.style.display = 'none';
+
+    if (isCancel) {
+        state.selectedMesIds.clear(); // 如果点击退出，则放弃已选择的消息
+    }
+
     updateSelInfo();
     openPanel();
 }
