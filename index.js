@@ -71,12 +71,12 @@ function injectStyles() {
     position:fixed; top:0; left:0; width:100vw; height:100vh;
     background:rgba(0,0,0,0.7); z-index:2147483640;
     opacity:0; pointer-events:none; transition:opacity .2s ease;
-    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
+    display: none; /* 默认彻底隐藏，避免干扰SillyTavern背景和点击 */
 }
 #ce-search-overlay { z-index:2147483645; }
 #ce-overlay.open, #ce-search-overlay.open {
     opacity:1; pointer-events:auto;
-    display: block; /* 修复：打开时显示 */
+    display: block;
 }
 
 /* ===== 面板基础 ===== */
@@ -91,18 +91,18 @@ function injectStyles() {
     font-size:13px;
     opacity:0; pointer-events:none;
     transition:opacity .2s ease;
-    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
+    display: none;
 }
 #ce-panel.open {
     opacity:1; pointer-events:auto;
-    display: flex; /* 修复：打开时显示 */
+    display: flex;
 }
 
 /* ===== 搜索弹窗 ===== */
 #ce-search-panel {
     position:fixed; top:8vh; left:50%;
     transform:translateX(-50%);
-    width:90vw; max-width:550px; height:80vh; /* 强制高度开启内部滚动 */
+    width:90vw; max-width:550px; height:80vh; /* 限制高度开启内部滑动 */
     border-radius:12px;
     z-index:2147483646; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
@@ -117,7 +117,7 @@ function injectStyles() {
 }
 .ce-search-header { display:flex; justify-content:flex-start; align-items:center; padding:12px 16px; flex-shrink:0; gap:12px; border-bottom:1px solid rgba(128,128,128,0.2); }
 .ce-search-close { font-size:20px; cursor:pointer; padding:4px; line-height:1; color:#888; display:flex; align-items:center; justify-content:center; }
-.ce-search-input { flex:1; min-width:0; padding:8px 12px; border-radius:6px; outline:none; font-size:14px; border:1px solid transparent; }
+.ce-search-input { flex:1; min-width:0; padding:8px 12px; border-radius:6px; outline:none; font-size:14px; border:1px solid transparent; background:transparent; }
 .ce-search-count { font-size:12px; white-space:nowrap; flex-shrink:0; opacity:0.8; }
 .ce-search-body { flex:1; overflow-y:auto; padding:12px 16px; -webkit-overflow-scrolling:touch; }
 .ce-search-body::-webkit-scrollbar { width:6px; }
@@ -126,6 +126,128 @@ function injectStyles() {
 .ce-search-item-header { font-size:12px; font-weight:bold; margin-bottom:6px; }
 .ce-search-item-text { font-size:13px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .ce-search-highlight { color:#ff4d4f; font-weight:bold; background:rgba(255,77,79,0.1); border-radius:2px; padding:0 2px; }
+
+/* ===== 手机/平板适配 ===== */
+@media (max-width:768px) {
+    .ce-style-cards { display:grid !important; grid-template-columns:1fr 1fr !important; }
+    .ce-color-row { flex-wrap:wrap !important; }
+}
+
+/* ===== 日间主题 (纯白) ===== */
+#ce-panel.theme-light, #ce-search-panel.theme-light { background:#ffffff; color:#000000; border:1px solid #cccccc; }
+#ce-panel.theme-light .ce-header { background:#ffffff; border-bottom:1px solid #eeeeee; }
+#ce-search-panel.theme-light .ce-search-input { color:#000000; background:#f0f2f5; }
+#ce-search-panel.theme-light .ce-search-close { color:#000000; opacity:0.6; }
+#ce-search-panel.theme-light .ce-search-close:hover { opacity:1; }
+#ce-search-panel.theme-light .ce-search-item { background:#f9f9f9; border:1px solid #eeeeee; }
+#ce-search-panel.theme-light .ce-search-item:hover { background:#f0f2f5; border-color:#ccc; }
+#ce-panel.theme-light .ce-close { color:#000000; }
+#ce-panel.theme-light .ce-close:hover { background:#f0f0f0; }
+#ce-panel.theme-light .ce-theme-btn { background:#f0f0f0; color:#000000; border:1px solid #cccccc; }
+#ce-panel.theme-light .ce-section { background:#ffffff; border:1px solid #eeeeee; }
+#ce-panel.theme-light .ce-section-title { color:#000000; }
+#ce-panel.theme-light .ce-input,
+#ce-panel.theme-light .ce-number-input,
+#ce-panel.theme-light .ce-hex-input { background:#ffffff; border:1px solid #cccccc; color:#000000; }
+#ce-panel.theme-light .ce-btn { background:#f0f0f0; border:1px solid #cccccc; color:#000000; }
+#ce-panel.theme-light .ce-btn:hover { background:#e0e0e0; }
+#ce-panel.theme-light .ce-btn-primary { background:#000000; color:#ffffff; border-color:#000000; }
+#ce-panel.theme-light .ce-btn-primary:hover { background:#333333; }
+#ce-panel.theme-light .ce-style-card { background:#ffffff; border:2px solid #eeeeee; }
+#ce-panel.theme-light .ce-style-card.active { border-color:#000000; background:#f9f9f9; }
+#ce-panel.theme-light .ce-target-btn, #ce-panel.theme-light .ce-picker-tab { background:#f0f0f0; border:1px solid #cccccc; color:#000000; }
+#ce-panel.theme-light .ce-target-btn.active, #ce-panel.theme-light .ce-picker-tab.active { background:#000000; color:#ffffff; }
+#ce-panel.theme-light .ce-export-row { background:#ffffff; border-top:1px solid #eeeeee; }
+
+/* ===== 夜间主题 (纯黑) ===== */
+#ce-panel.theme-dark, #ce-search-panel.theme-dark { background:#000000; color:#ffffff; border:1px solid #333333; }
+#ce-panel.theme-dark .ce-header { background:#000000; border-bottom:1px solid #333333; }
+#ce-search-panel.theme-dark .ce-search-input { color:#ffffff; background:#1a1a1a; border:1px solid #333; }
+#ce-search-panel.theme-dark .ce-search-close { color:#ffffff; opacity:0.6; }
+#ce-search-panel.theme-dark .ce-search-close:hover { opacity:1; }
+#ce-search-panel.theme-dark .ce-search-item { background:#111111; border:1px solid #333333; }
+#ce-search-panel.theme-dark .ce-search-item:hover { background:#1a1a1a; border-color:#555; }
+#ce-search-panel.theme-dark .ce-search-item-header { color:#aaa; }
+#ce-search-panel.theme-dark .ce-search-item-text { color:#eee; }
+#ce-panel.theme-dark .ce-close { color:#ffffff; }
+#ce-panel.theme-dark .ce-close:hover { background:#222222; }
+#ce-panel.theme-dark .ce-theme-btn { background:#222222; color:#ffffff; border:1px solid #444444; }
+#ce-panel.theme-dark .ce-section { background:#000000; border:1px solid #222222; }
+#ce-panel.theme-dark .ce-section-title { color:#ffffff; }
+#ce-panel.theme-dark .ce-input,
+#ce-panel.theme-dark .ce-number-input,
+#ce-panel.theme-dark .ce-hex-input { background:#000000; border:1px solid #444444; color:#ffffff; }
+#ce-panel.theme-dark .ce-btn { background:#222222; border:1px solid #444444; color:#ffffff; }
+#ce-panel.theme-dark .ce-btn:hover { background:#333333; }
+#ce-panel.theme-dark .ce-btn-primary { background:#ffffff; color:#000000; border-color:#ffffff; }
+#ce-panel.theme-dark .ce-btn-primary:hover { background:#cccccc; }
+#ce-panel.theme-dark .ce-style-card { background:#000000; border:2px solid #222222; }
+#ce-panel.theme-dark .ce-style-card.active { border-color:#ffffff; background:#111111; }
+#ce-panel.theme-dark .ce-target-btn, #ce-panel.theme-dark .ce-picker-tab { background:#222222; border:1px solid #444444; color:#ffffff; }
+#ce-panel.theme-dark .ce-target-btn.active, #ce-panel.theme-dark .ce-picker-tab.active { background:#ffffff; color:#000000; }
+#ce-panel.theme-dark .ce-export-row { background:#000000; border-top:1px solid #333333; }
+
+/* ===== 通用组件 ===== */
+.ce-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; font-size:15px; font-weight:bold; flex-shrink:0; }
+.ce-theme-btn { padding:6px 12px; border-radius:4px; font-size:12px; cursor:pointer; }
+.ce-close { cursor:pointer; font-size:20px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
+.ce-body { padding:16px 20px; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; }
+.ce-body::-webkit-scrollbar { width:6px; }
+.ce-body::-webkit-scrollbar-track { background:transparent; }
+.ce-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
+.ce-section { margin-bottom:18px; padding:14px; border-radius:8px; }
+.ce-section-title { font-size:13px; font-weight:bold; margin-bottom:12px; }
+.ce-radio-group { display:flex; gap:14px; flex-wrap:wrap; }
+.ce-radio-group label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; }
+.ce-input { width:100%; padding:10px 12px; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box; }
+.ce-number-input { width:80px; padding:8px; border-radius:6px; font-size:13px; outline:none; text-align:center; box-sizing:border-box; }
+.ce-btn { padding:10px 16px; border-radius:6px; cursor:pointer; font-size:13px; transition:all .2s; user-select:none; font-weight:bold; }
+.ce-style-cards { display:flex; gap:10px; flex-wrap:wrap; }
+.ce-style-card { flex:1; min-width:85px; padding:12px 8px; border-radius:8px; text-align:center; cursor:pointer; transition:all .2s; }
+.ce-style-preview { width:100%; height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:16px; margin-bottom:8px; border:1px solid #ccc; }
+.ce-style-card span { font-size:12px; font-weight:bold; }
+.ce-color-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.ce-hex-input { width:80px; padding:8px; border-radius:6px; font-size:12px; font-family:monospace; outline:none; box-sizing:border-box; }
+.ce-swatch { width:32px; height:32px; border-radius:6px; border:1px solid #888; cursor:pointer; flex-shrink:0; }
+.ce-target-btns { display:flex; gap:8px; margin-bottom:12px; }
+.ce-target-btn { flex:1; padding:10px; border-radius:6px; cursor:pointer; font-size:12px; text-align:center; font-weight:bold; }
+.ce-picker-tabs { display:flex; gap:6px; margin-bottom:10px; }
+.ce-picker-tab { flex:1; padding:8px; border-radius:6px; cursor:pointer; font-size:12px; text-align:center; font-weight:bold; }
+.ce-picker-pane { display:none; }
+.ce-picker-pane.active { display:block; }
+.ce-color-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
+.ce-grid-swatch { aspect-ratio:1; border-radius:4px; cursor:pointer; border:1px solid #888; box-sizing:border-box; }
+#ce-spectrum { width:100%; height:150px; border-radius:6px; cursor:crosshair; border:1px solid #888; display:block; }
+.ce-slider-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.ce-slider-row label { font-size:13px; font-weight:bold; width:14px; text-align:center; }
+.ce-slider-row input[type="range"] { flex:1; height:6px; }
+.ce-slider-val { font-size:12px; font-family:monospace; width:30px; text-align:right; }
+.ce-export-row { padding:16px 20px; display:flex; justify-content:center; flex-shrink:0; }
+
+/* ===== 自定义圆形复选框 ===== */
+.ce-checkbox {
+    appearance:none !important; -webkit-appearance:none !important;
+    position:absolute !important; left:10px !important; top:12px !important;
+    width:24px !important; height:24px !important;
+    border-radius:50% !important;
+    border:2px solid #888888 !important;
+    cursor:pointer !important; margin:0 !important;
+    z-index:2147483635 !important;
+    background:transparent !important;
+    background-image:none !important; /* 强制干掉自带背景图 */
+    transition:all .2s;
+}
+.ce-checkbox::before { display: none !important; content: none !important; } /* 强制干掉自带伪元素 */
+.ce-checkbox.theme-light:checked { background:#000000 !important; border-color:#000000 !important; }
+.ce-checkbox.theme-dark:checked { background:#ffffff !important; border-color:#ffffff !important; }
+.ce-checkbox:checked::after {
+    content:''; position:absolute;
+    left:7px; top:3px; width:6px; height:11px;
+    border:solid; border-width:0 2px 2px 0;
+    transform:rotate(45deg);
+}
+.ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
+.ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
 /* ===== 多选模式底部操作栏 (绝对防遮挡双按钮) ===== */
 #ce-selection-bar {
@@ -154,7 +276,7 @@ function injectStyles() {
 
 @media (max-width:768px) {
     #ce-selection-bar {
-        bottom:12vh !important; /* 拉高防遮挡 */
+        bottom:12vh !important; /* 手机端拉高防遮挡 */
         width:85vw !important;
         justify-content:space-between !important;
         padding:12px 16px !important;
@@ -425,7 +547,7 @@ function setupPanelEvents() {
     });
 
     document.getElementById('ce-sel-btn').addEventListener('click', function () {
-        state.selectedMesIds.clear(); // 每次开启选择前自动清空旧记忆
+        state.selectedMesIds.clear();
         enterSelectionMode();
     });
 
@@ -448,7 +570,7 @@ function setupPanelEvents() {
 
     document.querySelectorAll('input[name="ce-compress"]').forEach(r => {
         r.addEventListener('change', function () {
-            state.compressLevel = this.value; // 保存图片压缩档次
+            state.compressLevel = this.value;
         });
     });
 
@@ -532,7 +654,6 @@ function setupSearchPanelEvents() {
     const searchResults = document.getElementById('ce-search-results');
     const searchCount = document.getElementById('ce-search-count');
 
-    // 打开搜索弹窗
     document.getElementById('ce-open-search-btn').addEventListener('click', function () {
         searchOverlay.classList.add('open');
         searchPanel.classList.add('open');
@@ -542,7 +663,6 @@ function setupSearchPanelEvents() {
         setTimeout(() => searchInput.focus(), 100);
     });
 
-    // 关闭搜索弹窗
     const closeSearch = () => {
         searchOverlay.classList.remove('open');
         searchPanel.classList.remove('open');
@@ -554,7 +674,6 @@ function setupSearchPanelEvents() {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    // 实时搜索逻辑
     searchInput.addEventListener('input', function () {
         const keyword = this.value.trim().toLowerCase();
         searchResults.innerHTML = '';
@@ -582,7 +701,6 @@ function setupSearchPanelEvents() {
                 name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
             }
 
-            // 精准提取段落 (优先匹配 p 或 div 子元素，若无则整段提取)
             const paragraphs = Array.from(textEl.querySelectorAll('p, div')).filter(el => el.textContent.trim() !== '');
             const targets = paragraphs.length > 0 ? paragraphs : [textEl];
 
@@ -592,7 +710,6 @@ function setupSearchPanelEvents() {
                     matchCount++;
                     const floor = idx + 1;
 
-                    // 安全提取并高亮关键字
                     const safeText = text.replace(/</g, '<').replace(/>/g, '>');
                     const regex = new RegExp('(' + escapeRegExp(keyword) + ')', 'gi');
                     const highlightedText = safeText.replace(regex, '<span class="ce-search-highlight">$1</span>');
@@ -604,11 +721,9 @@ function setupSearchPanelEvents() {
                         <div class="ce-search-item-text">${highlightedText}</div>
                     `;
 
-                    // 点击精准跳转到对应的段落
                     item.addEventListener('click', () => {
                         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                        // 添加目标段落黄色闪烁提示反馈
                         const oldBg = target.style.backgroundColor;
                         const oldTrans = target.style.transition;
                         target.style.transition = 'background-color 0.3s';
@@ -795,7 +910,7 @@ function exitSelectionMode(isCancel = false) {
     if (bar) bar.style.display = 'none';
 
     if (isCancel) {
-        state.selectedMesIds.clear(); // 如果点击退出，则放弃已选择的消息
+        state.selectedMesIds.clear();
     }
 
     updateSelInfo();
@@ -820,9 +935,8 @@ function collectMessages() {
     const processMes = (mes) => {
         const mesId = mes.getAttribute('mesid');
         const textEl = mes.querySelector('.mes_text');
-        if (!textEl) return; // 只要有聊天内容，就绝对不跳过！
+        if (!textEl) return;
 
-        // 修复：优先从酒馆底层数据获取名字，没有DOM元素也不怕漏掉用户消息
         let name = "User";
         if (chatArray && chatArray[mesId] && chatArray[mesId].name) {
             name = chatArray[mesId].name;
@@ -934,7 +1048,7 @@ async function doExport() {
             await exportToImage(messages);
         }
 
-        // 导出完成后重置多选状态
+        // 导出完成后清空选中状态并更新界面
         state.selectedMesIds.clear();
         updateSelInfo();
 
@@ -969,7 +1083,6 @@ async function exportToImage(messages) {
     const container = document.createElement('div');
     container.id = 'ce-render-container';
 
-    // 动态应用宽度设置
     container.style.width = state.exportLayout === 'mobile' ? '450px' : '800px';
 
     let baseClass = '';
@@ -984,7 +1097,6 @@ async function exportToImage(messages) {
             break;
     }
 
-    // 如果是手机版排版，追加修饰类名
     if (state.exportLayout === 'mobile') {
         baseClass += ' ce-layout-mobile';
     }
@@ -1007,7 +1119,6 @@ async function exportToImage(messages) {
         });
         const a = document.createElement('a');
 
-        // 动态判断压缩等级
         if (state.compressLevel === '1.0') {
             a.href = canvas.toDataURL('image/png');
             a.download = 'chat_export_' + Date.now() + '.png';
