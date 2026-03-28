@@ -1130,27 +1130,35 @@ async function exportToImage(messages) {
 /* ===================== 扩展菜单按钮 ===================== */
 
 function createMenuButton() {
-    const menu = document.getElementById('extensionsMenu');
-    if (!menu) return;
-    if (document.getElementById('ce-ext-menu-item')) return;
-    const item = document.createElement('div');
-    item.id = 'ce-ext-menu-item';
-    item.className = 'list-group-item flex-container flexGap5';
-    item.innerHTML = '<div class="fa-solid fa-file-export extensionsMenuExtensionButton"></div><span>聊天导出</span>';
-    item.addEventListener('click', function () {
-        const trigger = document.getElementById('extensionsMenuButton');
-        if (trigger) trigger.click();
-        openPanel();
-    });
-    menu.prepend(item);
+    // 增加自动等待机制，每500毫秒寻找一次，直到酒馆菜单加载完毕
+    const checkExist = setInterval(function() {
+        const menu = document.getElementById('extensionsMenu');
+        if (menu) {
+            clearInterval(checkExist); // 找到菜单后停止寻找
+            if (document.getElementById('ce-ext-menu-item')) return;
+
+            const item = document.createElement('div');
+            item.id = 'ce-ext-menu-item';
+            item.className = 'list-group-item flex-container flexGap5';
+            item.innerHTML = '<div class="fa-solid fa-file-export extensionsMenuExtensionButton"></div><span>聊天导出</span>';
+
+            item.addEventListener('click', function () {
+                const trigger = document.getElementById('extensionsMenuButton');
+                if (trigger) trigger.click(); // 点击后自动收起扩展侧边栏
+                openPanel(); // 展开我们的导出面板
+            });
+
+            menu.prepend(item);
+        }
+    }, 500);
 }
 
 /* ===================== 初始化 ===================== */
 
 jQuery(async function () {
-    console.log('[ChatExporter] v2.9 开始加载...');
+    console.log('[ChatExporter] v2.9 核心开始加载...');
     injectStyles();
     createPanel();
-    createMenuButton();
-    console.log('[ChatExporter] v2.9 加载完成');
+    createMenuButton(); // 现在的按钮拥有了自动等待加载的能力
+    console.log('[ChatExporter] v2.9 界面注入完成，等待菜单挂载...');
 });
