@@ -952,21 +952,11 @@ function collectMessages() {
             name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
         }
 
-        // 修复日期丢失Bug：即使屏幕上隐藏了时间，也能从底层数据库提取，并格式化为你系统的绝佳母语格式
+        // 完全摒弃系统自动生成，强制抓取酒馆原本在节点里的原生日期（即使视觉隐藏也能提取）
         let dateStr = "";
-        if (chatArray && chatArray[mesId] && chatArray[mesId].send_date) {
-            let d = new Date(chatArray[mesId].send_date);
-            if (!isNaN(d.getTime())) {
-                const lang = navigator.language || 'es-ES'; // 自动适配浏览器语言，比如输出 21 de marzo de 2026 7:58
-                dateStr = d.toLocaleString(lang, {
-                    year: 'numeric', month: 'long', day: 'numeric',
-                    hour: '2-digit', minute: '2-digit'
-                }).replace(',', '');
-            }
-        }
-        if (!dateStr) {
-            const dateEl = mes.querySelector('.mes_date') || mes.querySelector('.timestamp');
-            if (dateEl) dateStr = dateEl.innerText.trim();
+        const dateEl = mes.querySelector('.mes_date') || mes.querySelector('.timestamp');
+        if (dateEl) {
+            dateStr = (dateEl.textContent || "").trim();
         }
 
         let rawText = "";
