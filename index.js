@@ -1,1 +1,508 @@
-import{getContext}from'../../../extensions.js';import{executeSlashCommands}from'../../../slash-commands/SlashCommandParser.js';const state={selectedMesIds:new Set,style:"default",format:"img",exportLayout:"pc",bgColor:"#ffffff",textColor:"#000000",colorTarget:"bg",selectMethod:"manual",selectionMode:!1,theme:"light",compressLevel:"1.0"};const PRESET_COLORS=["#ffffff","#f5f5f5","#e0e0e0","#bdbdbd","#9e9e9e","#757575","#424242","#212121","#000000","#ffcdd2","#ef9a9a","#e57373","#ef5350","#f44336","#e53935","#c62828","#b71c1c","#f8bbd0","#f48fb1","#f06292","#ec407a","#e91e63","#d81b60","#ad1457","#880e4f","#e1bee7","#ce93d8","#ba68c8","#ab47bc","#9c27b0","#8e24aa","#6a1b9a","#4a148c","#c5cae9","#9fa8da","#7986cb","#5c6bc0","#3f51b5","#3949ab","#283593","#1a237e","#bbdefb","#90caf9","#64b5f6","#42a5f5","#2196f3","#1e88e5","#1565c0","#0d47a1","#b2ebf2","#80deea","#4dd0e1","#26c6da","#00bcd4","#00acc1","#00838f","#006064","#c8e6c9","#a5d6a7","#81c784","#66bb6a","#4caf50","#43a047","#2e7d32","#1b5e20","#fff9c4","#fff176","#ffee58","#ffeb3b","#fdd835","#f9a825","#f57f17","#e65100","#ffe0b2","#ffcc80","#ffb74d","#ffa726","#ff9800","#fb8c00","#ef6c00","#d84315"];function loadHtml2Canvas(){return new Promise(((e,t)=>{if(window.html2canvas)return e();const n=document.createElement("script");n.src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",n.onload=e,n.onerror=t,document.head.appendChild(n)}))}function rgbToHex(e,t,n){return"#"+[e,t,n].map((e=>Math.max(0,Math.min(255,Math.round(e))).toString(16).padStart(2,"0"))).join("")}function hexToRgb(e){return e=e.replace("#",""),3===e.length&&(e=e.split("").map((e=>e+e)).join("")),6!==e.length?{r:0,g:0,b:0}:{r:parseInt(e.substring(0,2),16)||0,g:parseInt(e.substring(2,4),16)||0,b:parseInt(e.substring(4,6),16)||0}}function injectStyles(){if(document.getElementById("ce-injected-styles"))return;const e=document.createElement("style");e.id="ce-injected-styles",e.textContent=`#ce-overlay,#ce-search-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.7);z-index:2147483640;opacity:0;pointer-events:none;transition:opacity .2s ease;display:none}#ce-search-overlay{z-index:2147483645}#ce-overlay.open,#ce-search-overlay.open{opacity:1;pointer-events:auto;display:block}#ce-panel{position:fixed;top:5vh;left:50%;transform:translateX(-50%);width:480px;max-width:92vw;height:auto;max-height:90vh;border-radius:12px;z-index:2147483641;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6);font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s ease;display:none}#ce-panel.open{opacity:1;pointer-events:auto;display:flex}#ce-search-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:440px;max-width:92vw;height:60vh;max-height:800px;border-radius:12px;z-index:2147483646;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6);font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;opacity:0;pointer-events:none;transition:opacity .2s ease;display:none;box-sizing:border-box}#ce-search-panel.open{opacity:1;pointer-events:auto;display:flex}@media (max-width:768px){.ce-style-cards{display:grid!important;grid-template-columns:1fr 1fr!important}.ce-color-row{flex-wrap:wrap!important}#ce-search-panel{width:90vw!important;max-width:90vw!important;height:75vh!important}.ce-search-header{flex-wrap:wrap;gap:10px}.ce-search-input{width:100%;box-sizing:border-box}}#ce-panel.theme-light,#ce-search-panel.theme-light{background:#fff;color:#000;border:1px solid #ccc}#ce-panel.theme-light .ce-header,#ce-search-panel.theme-light .ce-search-header{background:#fff;border-bottom:1px solid #eee}#ce-panel.theme-light .ce-close,#ce-search-panel.theme-light .ce-search-close{color:#000}#ce-panel.theme-light .ce-close:hover{background:#f0f0f0}#ce-panel.theme-light .ce-theme-btn{background:#f0f0f0;color:#000;border:1px solid #ccc}#ce-panel.theme-light .ce-section{background:#fff;border:1px solid #eee}#ce-panel.theme-light .ce-section-title{color:#000}#ce-panel.theme-light .ce-hex-input,#ce-panel.theme-light .ce-input,#ce-panel.theme-light .ce-number-input{background:#fff;border:1px solid #ccc;color:#000}#ce-panel.theme-light .ce-btn{background:#f0f0f0;border:1px solid #ccc;color:#000}#ce-panel.theme-light .ce-btn:hover{background:#e0e0e0}#ce-panel.theme-light .ce-btn-primary{background:#000;color:#fff;border-color:#000}#ce-panel.theme-light .ce-btn-primary:hover{background:#333}#ce-panel.theme-light .ce-style-card{background:#fff;border:2px solid #eee}#ce-panel.theme-light .ce-style-card.active{border-color:#000;background:#f9f9f9}#ce-panel.theme-light .ce-picker-tab,#ce-panel.theme-light .ce-target-btn{background:#f0f0f0;border:1px solid #ccc;color:#000}#ce-panel.theme-light .ce-picker-tab.active,#ce-panel.theme-light .ce-target-btn.active{background:#000;color:#fff}#ce-panel.theme-light .ce-export-row{background:#fff;border-top:1px solid #eee}#ce-search-panel.theme-light .ce-search-input{background:#f0f2f5;color:#000;border:1px solid #ccc}#ce-search-panel.theme-light .ce-search-item{background:#f9f9f9;border:1px solid #eee}#ce-search-panel.theme-light .ce-search-item-header{color:#555}#ce-search-panel.theme-light .ce-search-item-text{color:#222}#ce-search-panel.theme-light .ce-search-item:hover{background:#f0f2f5;border-color:#ccc}#ce-panel.theme-dark,#ce-search-panel.theme-dark{background:#000;color:#fff;border:1px solid #333}#ce-panel.theme-dark .ce-header,#ce-search-panel.theme-dark .ce-search-header{background:#000;border-bottom:1px solid #333}#ce-panel.theme-dark .ce-close,#ce-search-panel.theme-dark .ce-search-close{color:#fff}#ce-panel.theme-dark .ce-close:hover{background:#222}#ce-panel.theme-dark .ce-theme-btn{background:#222;color:#fff;border:1px solid #444}#ce-panel.theme-dark .ce-section{background:#000;border:1px solid #222}#ce-panel.theme-dark .ce-section-title{color:#fff}#ce-panel.theme-dark .ce-hex-input,#ce-panel.theme-dark .ce-input,#ce-panel.theme-dark .ce-number-input{background:#000;border:1px solid #444;color:#fff}#ce-panel.theme-dark .ce-btn{background:#222;border:1px solid #444;color:#fff}#ce-panel.theme-dark .ce-btn:hover{background:#333}#ce-panel.theme-dark .ce-btn-primary{background:#fff;color:#000;border-color:#fff}#ce-panel.theme-dark .ce-btn-primary:hover{background:#ccc}#ce-panel.theme-dark .ce-style-card{background:#000;border:2px solid #222}#ce-panel.theme-dark .ce-style-card.active{border-color:#fff;background:#111}#ce-panel.theme-dark .ce-picker-tab,#ce-panel.theme-dark .ce-target-btn{background:#222;border:1px solid #444;color:#fff}#ce-panel.theme-dark .ce-picker-tab.active,#ce-panel.theme-dark .ce-target-btn.active{background:#fff;color:#000}#ce-panel.theme-dark .ce-export-row{background:#000;border-top:1px solid #333}#ce-search-panel.theme-dark .ce-search-input{background:#1a1a1a;color:#fff;border:1px solid #333}#ce-search-panel.theme-dark .ce-search-item{background:#111;border:1px solid #333}#ce-search-panel.theme-dark .ce-search-item-header{color:#aaa}#ce-search-panel.theme-dark .ce-search-item-text{color:#eee}#ce-search-panel.theme-dark .ce-search-item:hover{background:#1a1a1a;border-color:#555}.ce-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;font-size:15px;font-weight:700;flex-shrink:0}.ce-search-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;font-size:14px;font-weight:700;flex-shrink:0}.ce-theme-btn{padding:6px 12px;border-radius:4px;font-size:12px;cursor:pointer}.ce-close,.ce-search-close{cursor:pointer;font-size:22px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px}.ce-body{padding:16px 20px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}.ce-search-body{padding:16px 20px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px}.ce-body::-webkit-scrollbar,.ce-search-body::-webkit-scrollbar{width:6px}.ce-body::-webkit-scrollbar-track,.ce-search-body::-webkit-scrollbar-track{background:0 0}.ce-body::-webkit-scrollbar-thumb,.ce-search-body::-webkit-scrollbar-thumb{background:#888;border-radius:3px}.ce-section{margin-bottom:18px;padding:14px;border-radius:8px}.ce-section-title{font-size:13px;font-weight:700;margin-bottom:12px}.ce-radio-group{display:flex;gap:14px;flex-wrap:wrap}.ce-radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px}.ce-input,.ce-search-input{padding:10px 12px;border-radius:6px;font-size:13px;outline:0}.ce-number-input{width:80px;padding:8px;border-radius:6px;font-size:13px;outline:0;text-align:center;box-sizing:border-box}.ce-btn{padding:10px 16px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .2s;user-select:none;font-weight:700;text-align:center}.ce-style-cards{display:flex;gap:10px;flex-wrap:wrap}.ce-style-card{flex:1;min-width:85px;padding:12px 8px;border-radius:8px;text-align:center;cursor:pointer;transition:all .2s}.ce-style-preview{width:100%;height:42px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;margin-bottom:8px;border:1px solid #ccc}.ce-style-card span{font-size:12px;font-weight:700}.ce-color-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}.ce-hex-input{width:80px;padding:8px;border-radius:6px;font-size:12px;font-family:monospace;outline:0;box-sizing:border-box}.ce-swatch{width:32px;height:32px;border-radius:6px;border:1px solid #888;cursor:pointer;flex-shrink:0}.ce-target-btns{display:flex;gap:8px;margin-bottom:12px}.ce-target-btn{flex:1;padding:10px;border-radius:6px;cursor:pointer;font-size:12px;text-align:center;font-weight:700}.ce-picker-tabs{display:flex;gap:6px;margin-bottom:10px}.ce-picker-tab{flex:1;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;text-align:center;font-weight:700}.ce-picker-pane{display:none}.ce-picker-pane.active{display:block}.ce-color-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}.ce-grid-swatch{aspect-ratio:1;border-radius:4px;cursor:pointer;border:1px solid #888;box-sizing:border-box}#ce-spectrum{width:100%;height:150px;border-radius:6px;cursor:crosshair;border:1px solid #888;display:block}.ce-slider-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}.ce-slider-row label{font-size:13px;font-weight:700;width:14px;text-align:center}.ce-slider-row input[type=range]{flex:1;height:6px}.ce-slider-val{font-size:12px;font-family:monospace;width:30px;text-align:right}.ce-export-row{padding:16px 20px;display:flex;justify-content:center;flex-shrink:0}.ce-search-item{padding:12px;border-radius:6px;cursor:pointer;transition:all .2s}.ce-search-item-header{font-size:12px;margin-bottom:6px;font-weight:700}.ce-search-item-text{font-size:13px;line-height:1.5;word-break:break-all}.ce-checkbox{-webkit-appearance:none;appearance:none;position:absolute!important;left:10px!important;top:12px!important;width:24px!important;height:24px!important;border-radius:50%!important;border:2px solid #888!important;cursor:pointer!important;margin:0!important;z-index:2147483635!important;background:0 0!important;transition:all .2s}.ce-checkbox.theme-light:checked{background:#000!important;border-color:#000!important}.ce-checkbox.theme-dark:checked{background:#fff!important;border-color:#fff!important}.ce-checkbox:checked::after{content:'';position:absolute;left:7px;top:3px;width:6px;height:11px;border:solid;border-width:0 2px 2px 0;transform:rotate(45deg)}.ce-checkbox.theme-light:checked::after{border-color:#fff}.ce-checkbox.theme-dark:checked::after{border-color:#000}#ce-confirm-select-btn{position:fixed!important;bottom:120px!important;left:50%!important;transform:translateX(-50%)!important;padding:16px 40px!important;border-radius:30px!important;font-size:16px!important;font-weight:700!important;cursor:pointer!important;z-index:2147483647!important;box-shadow:0 8px 24px rgba(0,0,0,.5)!important}#ce-confirm-select-btn.theme-light{background:#000!important;color:#fff!important;border:1px solid #000!important}#ce-confirm-select-btn.theme-dark{background:#fff!important;color:#000!important;border:1px solid #fff!important}#ce-render-container{position:absolute;top:-99999px;left:-99999px}.ce-export-default{padding:28px;line-height:1.9;font-size:15px;font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif}.ce-export-default .ce-msg{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(128,128,128,.3)}.ce-export-default .ce-msg:last-child{border-bottom:none;margin-bottom:0}.ce-export-default .ce-msg-name{font-weight:700;margin-bottom:6px;font-size:14px}.ce-export-white-card{padding:24px;background:#f0f2f5;line-height:1.85;font-size:15px;font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;color:#333}.ce-export-white-card .ce-msg{background:#fff;border-radius:12px;padding:18px 22px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)}.ce-export-white-card .ce-msg:last-child{margin-bottom:0}.ce-export-white-card .ce-msg-name{font-weight:700;color:#1a73e8;margin-bottom:8px;font-size:13px}.ce-export-dark-minimal{padding:28px;background:#1a1a2e;line-height:1.85;font-size:15px;font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;color:#e2e2e2}.ce-export-dark-minimal .ce-msg{padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,.1)}.ce-export-dark-minimal .ce-msg:last-child{border-bottom:none;margin-bottom:0}.ce-export-dark-minimal .ce-msg-name{font-weight:700;color:#8b92ff;margin-bottom:6px;font-size:13px}.ce-export-warm-note{padding:30px 34px;background:#faf6ee;line-height:2;font-size:15px;font-family:Georgia,'Noto Serif SC','Source Han Serif SC',serif;color:#4a3f2f}.ce-export-warm-note .ce-msg{padding-left:16px;margin-bottom:18px;border-left:3px solid #c9a96e}.ce-export-warm-note .ce-msg:last-child{margin-bottom:0}.ce-export-warm-note .ce-msg-name{font-weight:700;color:#8b6c2a;margin-bottom:6px;font-size:13px}.ce-layout-mobile{font-size:16px!important}.ce-layout-mobile.ce-export-default{padding:20px}.ce-layout-mobile.ce-export-white-card{padding:16px}.ce-layout-mobile.ce-export-dark-minimal{padding:20px}.ce-layout-mobile.ce-export-warm-note{padding:24px 20px}.ce-layout-mobile .ce-msg-name{font-size:15px!important}#ce-ext-menu-item{cursor:pointer}#ce-ext-menu-item:hover{background:rgba(128,128,128,.1)}`,document.head.appendChild(e)}function createPanel(){document.body.insertAdjacentHTML("beforeend",'<div id="ce-overlay"></div><div id="ce-panel" class="theme-light"><div class="ce-header"><span>聊天记录导出器</span><div style="display:flex;align-items:center;gap:12px;"><div class="ce-theme-btn" id="ce-theme-btn">切换夜间</div><div class="ce-close" id="ce-close-btn">X</div></div></div><div class="ce-body"><div class="ce-section" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-weight:bold;">快速导航</span><button class="ce-btn" id="ce-scroll-top-btn" style="padding:8px 12px;">回顶</button><button class="ce-btn" id="ce-scroll-bottom-btn" style="padding:8px 12px;">回底</button><div style="width:1px;height:20px;background:#ccc;margin:0 4px;"></div><input type="number" class="ce-number-input" id="ce-jump-input" placeholder="楼层" min="1" style="width:60px;"><button class="ce-btn" id="ce-jump-btn" style="padding:8px 12px;">跳转</button><div style="flex:1"></div><button class="ce-btn ce-btn-primary" id="ce-open-search-btn" style="padding:8px 14px;">搜索消息</button></div><div class="ce-section"><div class="ce-section-title">消息隐藏与显示系统</div><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;"><span>目标区间</span><input type="number" class="ce-number-input" id="ce-vis-start" placeholder="起始层" min="1" style="width:75px;"><span>至</span><input type="number" class="ce-number-input" id="ce-vis-end" placeholder="结束层" min="1" style="width:75px;"></div><div style="display:flex;gap:10px;"><button class="ce-btn" id="ce-hide-btn" style="flex:1;background:#e53935;color:#fff;border:none;">隐藏选中层</button><button class="ce-btn" id="ce-unhide-btn" style="flex:1;background:#43a047;color:#fff;border:none;">显示选中层</button></div></div><div class="ce-section"><div class="ce-section-title">消息导出选择</div><div class="ce-radio-group"><label><input type="radio" name="ce-sel-method" value="manual" checked> 手动勾选</label><label><input type="radio" name="ce-sel-method" value="range"> 按楼层范围</label><label><input type="radio" name="ce-sel-method" value="all"> 全部导出</label></div><div id="ce-manual-area" style="margin-top:12px"><div style="display:flex;align-items:center;gap:10px"><button class="ce-btn" id="ce-sel-btn">开启选择模式</button><span id="ce-sel-info">已选 0 条</span></div></div><div id="ce-range-area" style="display:none;margin-top:12px"><div style="display:flex;align-items:center;gap:8px;"><span>楼层</span><input type="number" class="ce-number-input" id="ce-floor-start" placeholder="起始" min="1"><span>至</span><input type="number" class="ce-number-input" id="ce-floor-end" placeholder="结束" min="1"></div></div></div><div class="ce-section"><div class="ce-section-title">标签过滤</div><input type="text" class="ce-input" id="ce-tags-input" placeholder="标签名，如 thinking（留空不过滤）" style="width:100%;"><div class="ce-radio-group" style="margin-top:12px"><label><input type="radio" name="ce-filter" value="0" checked> 不过滤</label><label><input type="radio" name="ce-filter" value="1"> 去除标签及内容</label><label><input type="radio" name="ce-filter" value="2"> 仅保留标签内内容</label></div></div><div class="ce-section"><div class="ce-section-title">导出格式与排版</div><div class="ce-radio-group" style="margin-bottom:12px;"><label><input type="radio" name="ce-format" value="txt"> TXT 文本</label><label><input type="radio" name="ce-format" value="img" checked> 图片导出</label></div><div class="ce-radio-group" id="ce-layout-group" style="margin-bottom:12px;"><label><input type="radio" name="ce-layout" value="pc" checked> 电脑版 (宽屏)</label><label><input type="radio" name="ce-layout" value="mobile"> 手机版 (窄屏阅读)</label></div><div class="ce-radio-group" id="ce-compress-group"><label><input type="radio" name="ce-compress" value="1.0" checked> 原画质</label><label><input type="radio" name="ce-compress" value="0.8"> 轻度压缩</label><label><input type="radio" name="ce-compress" value="0.6"> 中度压缩</label><label><input type="radio" name="ce-compress" value="0.4"> 极限压缩</label></div></div><div class="ce-section" id="ce-style-section"><div class="ce-section-title">导出样式</div><div class="ce-style-cards"><div class="ce-style-card active" data-style="default"><div class="ce-style-preview" style="background:#ffffff;color:#000">Aa</div><span>默认</span></div><div class="ce-style-card" data-style="white-card"><div class="ce-style-preview" style="background:#f0f2f5;color:#333"><div style="background:#fff;padding:2px 8px;border-radius:4px;font-size:13px;box-shadow:0 1px 2px rgba(0,0,0,.1)">Aa</div></div><span>简约白卡</span></div><div class="ce-style-card" data-style="dark-minimal"><div class="ce-style-preview" style="background:#1a1a2e;color:#e2e2e2">Aa</div><span>深色极简</span></div><div class="ce-style-card" data-style="warm-note"><div class="ce-style-preview" style="background:#faf6ee;color:#4a3f2f;border-left:3px solid #c9a96e;padding-left:8px;font-family:Georgia,serif">Aa</div><span>暖色便签</span></div></div></div><div class="ce-section" id="ce-color-section"><div class="ce-section-title">默认颜色调节</div><div class="ce-color-row"><span>背景色</span><input type="text" class="ce-hex-input" id="ce-bg-hex" value="#ffffff"><div class="ce-swatch" id="ce-bg-swatch" style="background:#ffffff"></div><div style="flex:1"></div><span>文字色</span><input type="text" class="ce-hex-input" id="ce-text-hex" value="#000000"><div class="ce-swatch" id="ce-text-swatch" style="background:#000000"></div></div><div class="ce-target-btns"><div class="ce-target-btn active" data-target="bg">编辑背景色</div><div class="ce-target-btn" data-target="text">编辑文字色</div></div><div class="ce-picker-tabs"><div class="ce-picker-tab active" data-tab="grid">网格</div><div class="ce-picker-tab" data-tab="spectrum">光谱</div><div class="ce-picker-tab" data-tab="slider">滑块</div></div><div id="ce-picker-content"><div class="ce-picker-pane active" data-tab="grid"><div class="ce-color-grid" id="ce-color-grid"></div></div><div class="ce-picker-pane" data-tab="spectrum"><canvas id="ce-spectrum"></canvas></div><div class="ce-picker-pane" data-tab="slider"><div class="ce-slider-row"><label>R</label><input type="range" id="ce-r-slider" min="0" max="255" value="255"><span class="ce-slider-val" id="ce-r-val">255</span></div><div class="ce-slider-row"><label>G</label><input type="range" id="ce-g-slider" min="0" max="255" value="255"><span class="ce-slider-val" id="ce-g-val">255</span></div><div class="ce-slider-row"><label>B</label><input type="range" id="ce-b-slider" min="0" max="255" value="255"><span class="ce-slider-val" id="ce-b-val">255</span></div></div></div></div></div><div class="ce-export-row"><button class="ce-btn ce-btn-primary" id="ce-export-btn" style="width:100%;padding:14px;font-size:16px;border-radius:8px;">确 认 导 出</button></div></div><div id="ce-search-overlay"></div><div id="ce-search-panel" class="theme-light"><div class="ce-search-header"><input type="text" class="ce-search-input" id="ce-search-input" placeholder="输入关键字搜索..."><span class="ce-search-count" id="ce-search-count" style="white-space:nowrap;">0 条匹配</span><div class="ce-search-close" id="ce-search-close">×</div></div><div class="ce-search-body" id="ce-search-results"></div></div>'),setupPanelEvents(),setupSearchPanelEvents()}function setupPanelEvents(){document.getElementById("ce-theme-btn").addEventListener("click",(function(){const e=document.getElementById("ce-panel"),t=document.getElementById("ce-search-panel");"light"===state.theme?(state.theme="dark",e.classList.remove("theme-light"),e.classList.add("theme-dark"),t.classList.remove("theme-light"),t.classList.add("theme-dark"),this.textContent="切换日间"):(state.theme="light",e.classList.remove("theme-dark"),e.classList.add("theme-light"),t.classList.remove("theme-dark"),t.classList.add("theme-light"),this.textContent="切换夜间")})),document.getElementById("ce-close-btn").addEventListener("click",closePanel),document.getElementById("ce-overlay").addEventListener("click",closePanel),document.getElementById("ce-jump-btn").addEventListener("click",(function(){const e=parseInt(document.getElementById("ce-jump-input").value);if(!e||e<1)return;const t=document.querySelectorAll("#chat .mes");e<=t.length?(t[e-1].scrollIntoView({behavior:"smooth",block:"center"}),closePanel()):alert("楼层不存在，当前最大楼层为 "+t.length)})),document.getElementById("ce-scroll-top-btn").addEventListener("click",(function(){const e=document.querySelectorAll("#chat .mes");e.length>0&&(e[0].scrollIntoView({behavior:"smooth",block:"start"}),closePanel())})),document.getElementById("ce-scroll-bottom-btn").addEventListener("click",(function(){const e=document.querySelectorAll("#chat .mes");e.length>0&&(e[e.length-1].scrollIntoView({behavior:"smooth",block:"end"}),closePanel())}));const e=async e=>{const t=parseInt(document.getElementById("ce-vis-start").value),n=parseInt(document.getElementById("ce-vis-end").value);if(!t||!n||t>n)return void alert("请输入有效的楼层范围，且起始层不能大于结束层。");const a=`/${e} ${t}-${n}`;try{await executeSlashCommands(a),closePanel()}catch(e){console.error(e),alert("执行失败，请检查酒馆版本是否支持该Slash命令。")}};document.getElementById("ce-hide-btn").addEventListener("click",(()=>e("hide"))),document.getElementById("ce-unhide-btn").addEventListener("click",(()=>e("unhide"))),document.querySelectorAll('input[name="ce-sel-method"]').forEach((e=>{e.addEventListener("change",(function(){state.selectMethod=this.value,document.getElementById("ce-manual-area").style.display="manual"===this.value?"":"none",document.getElementById("ce-range-area").style.display="range"===this.value?"":"none"}))})),document.getElementById("ce-sel-btn").addEventListener("click",(function(){state.selectedMesIds.clear(),enterSelectionMode()})),document.querySelectorAll('input[name="ce-format"]').forEach((e=>{e.addEventListener("change",(function(){state.format=this.value;const e="img"===this.value;document.getElementById("ce-style-section").style.display=e?"":"none",document.getElementById("ce-layout-group").style.display=e?"flex":"none",document.getElementById("ce-compress-group").style.display=e?"flex":"none",updateColorSectionVisibility()}))})),document.querySelectorAll('input[name="ce-layout"]').forEach((e=>{e.addEventListener("change",(function(){state.exportLayout=this.value}))})),document.querySelectorAll('input[name="ce-compress"]').forEach((e=>{e.addEventListener("change",(function(){state.compressLevel=this.value}))})),document.querySelectorAll(".ce-style-card").forEach((e=>{e.addEventListener("click",(function(){document.querySelectorAll(".ce-style-card").forEach((e=>e.classList.remove("active"))),this.classList.add("active"),state.style=this.dataset.style,updateColorSectionVisibility()}))})),document.querySelectorAll(".ce-target-btn").forEach((e=>{e.addEventListener("click",(function(){document.querySelectorAll(".ce-target-btn").forEach((e=>e.classList.remove("active"))),this.classList.add("active"),state.colorTarget=this.dataset.target,syncSlidersFromState()}))})),document.querySelectorAll(".ce-picker-tab").forEach((e=>{e.addEventListener("click",(function(){document.querySelectorAll(".ce-picker-tab").forEach((e=>e.classList.remove("active"))),this.classList.add("active");const e=this.dataset.tab;document.querySelectorAll(".ce-picker-pane").forEach((t=>{t.classList.toggle("active",t.dataset.tab===e)})),"spectrum"===e&&setTimeout(drawSpectrum,20)}))})),initColorGrid();const t=document.getElementById("ce-spectrum");let n=!1;t.addEventListener("mousedown",(function(e){n=!0,pickSpectrum(e)})),t.addEventListener("mousemove",(function(e){n&&pickSpectrum(e)})),t.addEventListener("touchstart",(function(e){n=!0,pickSpectrumTouch(e)}),{passive:!1}),t.addEventListener("touchmove",(function(e){n&&pickSpectrumTouch(e)}),{passive:!1}),document.addEventListener("mouseup",(function(){n=!1})),document.addEventListener("touchend",(function(){n=!1})),["r","g","b"].forEach((e=>{document.getElementById("ce-"+e+"-slider").addEventListener("input",(function(){document.getElementById("ce-"+e+"-val").textContent=this.value;const e=parseInt(document.getElementById("ce-r-slider").value),t=parseInt(document.getElementById("ce-g-slider").value),n=parseInt(document.getElementById("ce-b-slider").value);applyPickedColor(rgbToHex(e,t,n))}))})),document.getElementById("ce-bg-hex").addEventListener("change",(function(){/^#[0-9a-fA-F]{6}$/.test(this.value)&&(state.bgColor=this.value,document.getElementById("ce-bg-swatch").style.background=this.value,"bg"===state.colorTarget&&syncSlidersFromState())})),document.getElementById("ce-text-hex").addEventListener("change",(function(){/^#[0-9a-fA-F]{6}$/.test(this.value)&&(state.textColor=this.value,document.getElementById("ce-text-swatch").style.background=this.value,"text"===state.colorTarget&&syncSlidersFromState())})),document.getElementById("ce-export-btn").addEventListener("click",(function(){doExport()}))}function setupSearchPanelEvents(){const e=document.getElementById("ce-search-overlay"),t=document.getElementById("ce-search-panel"),n=document.getElementById("ce-search-input"),a=document.getElementById("ce-search-results"),c=document.getElementById("ce-search-count");document.getElementById("ce-open-search-btn").addEventListener("click",(function(){e.classList.add("open"),t.classList.add("open"),n.value="",a.innerHTML="",c.textContent="0 条匹配",setTimeout((()=>n.focus()),100)}));const s=()=>{e.classList.remove("open"),t.classList.remove("open")};document.getElementById("ce-search-close").addEventListener("click",s),e.addEventListener("click",s),n.addEventListener("input",(function(){const e=this.value.trim().toLowerCase();if(a.innerHTML="",!e)return void(c.textContent="0 条匹配");let t=0;document.querySelectorAll("#chat .mes").forEach(((n,l)=>{const r=n.querySelector(".mes_text");if(!r)return;let o="User";const d="function"==typeof getContext?getContext():null,m=d?d.chat:[],i=n.getAttribute("mesid");if(m&&m[i]&&m[i].name)o=m[i].name;else{const e=n.querySelector(".ch_name");o=e?e.innerText.trim():n.getAttribute("ch_name")||"User"}const u=r.innerText;if(o.toLowerCase().includes(e)||u.toLowerCase().includes(e)){t++;const e=l+1,d=document.createElement("div");d.className="ce-search-item",d.innerHTML=`\n                    <div class="ce-search-item-header">\n                        <span>第 ${e} 层 | ${o}</span>\n                    </div>\n                    <div class="ce-search-item-text">${u}</div>\n                `,d.addEventListener("click",(()=>{n.scrollIntoView({behavior:"smooth",block:"center"}),s(),closePanel()})),a.appendChild(d)}})),c.textContent=`${t} 条匹配`}))}function openPanel(){document.getElementById("ce-overlay").classList.add("open"),document.getElementById("ce-panel").classList.add("open"),updateSelInfo()}function closePanel(){document.getElementById("ce-overlay").classList.remove("open"),document.getElementById("ce-panel").classList.remove("open")}function updateColorSectionVisibility(){const e="img"===state.format&&"default"===state.style;document.getElementById("ce-color-section").style.display=e?"":"none"}function initColorGrid(){const e=document.getElementById("ce-color-grid");PRESET_COLORS.forEach((t=>{const n=document.createElement("div");n.className="ce-grid-swatch",n.style.background=t,n.addEventListener("click",(function(){applyPickedColor(t)})),e.appendChild(n)}))}function drawSpectrum(){const e=document.getElementById("ce-spectrum");if(!e)return;const t=e.parentElement.clientWidth||380;e.width=t,e.height=150,e.style.width=t+"px",e.style.height="150px";const n=e.getContext("2d"),a=n.createLinearGradient(0,0,t,0);a.addColorStop(0,"#ff0000"),a.addColorStop(1/6,"#ffff00"),a.addColorStop(1/3,"#00ff00"),a.addColorStop(.5,"#00ffff"),a.addColorStop(2/3,"#0000ff"),a.addColorStop(5/6,"#ff00ff"),a.addColorStop(1,"#ff0000"),n.fillStyle=a,n.fillRect(0,0,t,150);const c=n.createLinearGradient(0,0,0,150);c.addColorStop(0,"rgba(255,255,255,1)"),c.addColorStop(.5,"rgba(255,255,255,0)"),n.fillStyle=c,n.fillRect(0,0,t,150);const s=n.createLinearGradient(0,0,0,150);s.addColorStop(.5,"rgba(0,0,0,0)"),s.addColorStop(1,"rgba(0,0,0,1)"),n.fillStyle=s,n.fillRect(0,0,t,150)}function pickSpectrum(e){const t=document.getElementById("ce-spectrum"),n=t.getBoundingClientRect(),a=Math.max(0,Math.min(e.clientX-n.left,t.width-1)),c=Math.max(0,Math.min(e.clientY-n.top,t.height-1)),s=t.getContext("2d").getImageData(a,c,1,1).data;applyPickedColor(rgbToHex(s[0],s[1],s[2]))}function pickSpectrumTouch(e){e.preventDefault();const t=e.touches[0],n=document.getElementById("ce-spectrum"),a=n.getBoundingClientRect(),c=Math.max(0,Math.min(t.clientX-a.left,n.width-1)),s=Math.max(0,Math.min(t.clientY-a.top,n.height-1)),l=n.getContext("2d").getImageData(c,s,1,1).data;applyPickedColor(rgbToHex(l[0],l[1],l[2]))}function applyPickedColor(e){"bg"===state.colorTarget?(state.bgColor=e,document.getElementById("ce-bg-hex").value=e,document.getElementById("ce-bg-swatch").style.background=e):(state.textColor=e,document.getElementById("ce-text-hex").value=e,document.getElementById("ce-text-swatch").style.background=e),syncSlidersFromState()}function syncSlidersFromState(){const e=hexToRgb("bg"===state.colorTarget?state.bgColor:state.textColor);document.getElementById("ce-r-slider").value=e.r,document.getElementById("ce-g-slider").value=e.g,document.getElementById("ce-b-slider").value=e.b,document.getElementById("ce-r-val").textContent=e.r,document.getElementById("ce-g-val").textContent=e.g,document.getElementById("ce-b-val").textContent=e.b}function enterSelectionMode(){state.selectionMode=!0,closePanel(),document.querySelectorAll(".ce-checkbox").forEach((e=>e.remove())),document.querySelectorAll("#chat .mes").forEach((e=>{const t=e.getAttribute("mesid"),n=document.createElement("input");n.type="checkbox",n.className="ce-checkbox "+("light"===state.theme?"theme-light":"theme-dark"),n.dataset.mesid=t,n.checked=state.selectedMesIds.has(t),n.addEventListener("click",(function(e){e.stopPropagation()})),n.addEventListener("change",(function(){this.checked?state.selectedMesIds.add(t):state.selectedMesIds.delete(t)})),e.style.position="relative",e.insertBefore(n,e.firstChild)}));if(!document.getElementById("ce-confirm-select-btn")){const e=document.createElement("button");e.id="ce-confirm-select-btn",e.className="light"===state.theme?"theme-light":"theme-dark",e.textContent="完成选择",e.addEventListener("click",exitSelectionMode),document.body.appendChild(e)}else{const e=document.getElementById("ce-confirm-select-btn");e.className="light"===state.theme?"theme-light":"theme-dark",e.style.display=""}}function exitSelectionMode(){state.selectionMode=!1,document.querySelectorAll(".ce-checkbox").forEach((e=>e.remove()));const e=document.getElementById("ce-confirm-select-btn");e&&(e.style.display="none"),updateSelInfo(),openPanel()}function updateSelInfo(){const e=document.getElementById("ce-sel-info");e&&(e.textContent="已选 "+state.selectedMesIds.size+" 条")}function collectMessages(){const e=document.getElementById("ce-tags-input").value.trim(),t=document.querySelector('input[name="ce-filter"]:checked').value,n=[],a="function"==typeof getContext?getContext():null,c=a?a.chat:[];const s=e=>{const t=e.getAttribute("mesid"),a=e.querySelector(".mes_text");if(!a)return;let s="User";if(c&&c[t]&&c[t].name)s=c[t].name;else{const t=e.querySelector(".ch_name");s=t?t.innerText.trim():e.getAttribute("ch_name")||"User"}let l="",r=!1;c&&c[t]&&c[t].mes?(l=c[t].mes,r=!0):l=a.innerText,n.push({name:s,rawText:l,html:a.innerHTML,hasRaw:r})};if("manual"===state.selectMethod)state.selectedMesIds.forEach((e=>{const t=document.querySelector('.mes[mesid="'+e+'"]');t&&s(t)}));else if("all"===state.selectMethod)document.querySelectorAll("#chat .mes").forEach((e=>s(e)));else{const e=parseInt(document.getElementById("ce-floor-start").value)||1,t=parseInt(document.getElementById("ce-floor-end").value)||999999;document.querySelectorAll("#chat .mes").forEach(((n,a)=>{const c=a+1;c>=e&&c<=t&&s(n)}))}const l=[],r=e.split(",").map((e=>e.trim().replace(/^<\/?|\/?>$/g,""))).filter(Boolean);return n.forEach((e=>{let n=e.rawText,a=[];if(r.length&&"0"!==t&&(r.forEach((c=>{const s=new RegExp("<\\s*"+c+"\\b[^>]*>([\\s\\S]*?)<\\s*\\/\\s*"+c+"\\s*>","gi");if("1"===t)n=n.replace(s,"");else if("2"===t){let e;while(null!==(e=s.exec(n)))e[1].trim()&&a.push(e[1].trim())}})),"2"===t&&(n=a.join("\n\n"))),!n.trim())return;let c=e.html;if(r.length&&"0"!==t&&e.hasRaw)try{if(window.marked&&window.marked.parse)c=window.marked.parse(n);else if(window.showdown&&window.showdown.Converter){c=(new window.showdown.Converter).makeHtml(n)}else c=n.replace(/&/g,"&").replace(/</g,"<").replace(/>/g,">").replace(/\n/g,"<br>")}catch(e){c=n.replace(/\n/g,"<br>")}else"2"===t&&!e.hasRaw&&(c=n.replace(/\n/g,"<br>"));const s=document.createElement("div");s.innerHTML=c;const o=s.innerText.trim()||n;l.push({name:e.name,text:o,html:c})})),l}function doExport(){try{const e=collectMessages();if(!e.length)return void alert("没有可导出的消息。请检查是否已选择消息，或标签过滤设置是否正确。");"txt"===state.format?exportToTxt(e):exportToImage(e),state.selectedMesIds.clear(),updateSelInfo(),document.querySelectorAll(".ce-checkbox").forEach((e=>e.checked=!1))}catch(e){console.error("[ChatExporter] 导出出错:",e),alert("导出时发生错误: "+e.message)}}function exportToTxt(e){let t="";e.forEach((e=>{t+=e.name+":\n"+e.text+"\n\n"}));const n=new Blob([t],{type:"text/plain;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(n),a.download="chat_export_"+Date.now()+".txt",document.body.appendChild(a),a.click(),document.body.removeChild(a),URL.revokeObjectURL(a.href)}async function exportToImage(e){try{await loadHtml2Canvas()}catch(e){return void alert("html2canvas 库加载失败，请检查网络。")}const t=document.createElement("div");t.id="ce-render-container",t.style.width="mobile"===state.exportLayout?"450px":"800px";let n="";switch(state.style){case"white-card":n="ce-export-white-card";break;case"dark-minimal":n="ce-export-dark-minimal";break;case"warm-note":n="ce-export-warm-note";break;default:n="ce-export-default",t.style.backgroundColor=state.bgColor,t.style.color=state.textColor;break}"mobile"===state.exportLayout&&(n+=" ce-layout-mobile"),t.className=n,e.forEach((e=>{const n=document.createElement("div");n.className="ce-msg",n.innerHTML='<div class="ce-msg-name">'+e.name+'</div><div class="ce-msg-content">'+e.html+"</div>",t.appendChild(n)})),document.body.appendChild(t);try{const e=await html2canvas(t,{backgroundColor:null,scale:2,useCORS:!0}),n=document.createElement("a");if("1.0"===state.compressLevel)n.href=e.toDataURL("image/png"),n.download="chat_export_"+Date.now()+".png";else{const t=parseFloat(state.compressLevel);n.href=e.toDataURL("image/jpeg",t),n.download="chat_export_compressed_"+Date.now()+".jpg"}document.body.appendChild(n),n.click(),document.body.removeChild(n)}catch(e){alert("图片生成失败: "+e.message)}t.remove()}function createMenuButton(){const e=()=>{const e=document.getElementById("extensions_settings");if(e&&!document.getElementById("ce-ext-menu-item")){const t=document.createElement("div");t.id="ce-ext-menu-item",t.className="inline-drawer",t.style.cursor="pointer",t.style.padding="12px",t.style.marginTop="10px",t.style.marginBottom="10px",t.style.border="1px solid var(--SmartThemeBorderColor, #555)",t.style.borderRadius="8px",t.style.background="var(--SmartThemeBlurTintColor, rgba(0,0,0,0.1))",t.style.transition="all 0.2s",t.innerHTML='\n                <div style="display:flex; align-items:center; gap:10px; font-weight:bold; font-size:14px;">\n                    <div class="fa-solid fa-file-export" style="font-size:18px; color:var(--SmartThemeQuoteColor, #888);"></div>\n                    <span>聊天记录导出</span>\n                </div>\n            ',t.onmouseenter=()=>t.style.background="var(--SmartThemeBlurTintColor, rgba(255,255,255,0.1))",t.onmouseleave=()=>t.style.background="var(--SmartThemeBlurTintColor, rgba(0,0,0,0.1))",t.addEventListener("click",(e=>{e.stopPropagation(),openPanel()})),e.prepend(t)}};setInterval(e,2e3);const t=document.getElementById("extensions_settings_button")||document.querySelector(".fa-wand-magic-sparkles");t&&t.addEventListener("click",(()=>setTimeout(e,100)))}jQuery(async function(){injectStyles(),createPanel(),createMenuButton()});
+import { getContext } from '../../../extensions.js';
+import { executeSlashCommands } from '../../../slash-commands/SlashCommandParser.js';
+
+const state = {
+    selectedMesIds: new Set(),
+    style: 'default',
+    format: 'img',
+    exportLayout: 'pc',
+    bgColor: '#ffffff',
+    textColor: '#000000',
+    colorTarget: 'bg',
+    selectMethod: 'manual',
+    selectionMode: false,
+    theme: 'light',
+    compressLevel: '1.0'
+};
+
+const PRESET_COLORS = [
+    '#ffffff','#f5f5f5','#e0e0e0','#bdbdbd','#9e9e9e','#757575','#424242','#212121','#000000',
+    '#ffcdd2','#ef9a9a','#e57373','#ef5350','#f44336','#e53935','#c62828','#b71c1c',
+    '#f8bbd0','#f48fb1','#f06292','#ec407a','#e91e63','#d81b60','#ad1457','#880e4f',
+    '#e1bee7','#ce93d8','#ba68c8','#ab47bc','#9c27b0','#8e24aa','#6a1b9a','#4a148c',
+    '#c5cae9','#9fa8da','#7986cb','#5c6bc0','#3f51b5','#3949ab','#283593','#1a237e',
+    '#bbdefb','#90caf9','#64b5f6','#42a5f5','#2196f3','#1e88e5','#1565c0','#0d47a1',
+    '#b2ebf2','#80deea','#4dd0e1','#26c6da','#00bcd4','#00acc1','#00838f','#006064',
+    '#c8e6c9','#a5d6a7','#81c784','#66bb6a','#4caf50','#43a047','#2e7d32','#1b5e20',
+    '#fff9c4','#fff176','#ffee58','#ffeb3b','#fdd835','#f9a825','#f57f17','#e65100',
+    '#ffe0b2','#ffcc80','#ffb74d','#ffa726','#ff9800','#fb8c00','#ef6c00','#d84315',
+];
+
+function loadHtml2Canvas() {
+    return new Promise((resolve, reject) => {
+        if (window.html2canvas) return resolve();
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('');
+}
+
+function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    if (hex.length !== 6) return { r: 0, g: 0, b: 0 };
+    return {
+        r: parseInt(hex.substring(0, 2), 16) || 0,
+        g: parseInt(hex.substring(2, 4), 16) || 0,
+        b: parseInt(hex.substring(4, 6), 16) || 0,
+    };
+}
+
+function injectStyles() {
+    if (document.getElementById('ce-injected-styles')) return;
+    const el = document.createElement('style');
+    el.id = 'ce-injected-styles';
+    el.textContent = `
+    #ce-overlay, #ce-search-overlay { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:2147483640; opacity:0; pointer-events:none; transition:opacity .2s ease; display: none; }
+    #ce-search-overlay { z-index:2147483645; }
+    #ce-overlay.open, #ce-search-overlay.open { opacity:1; pointer-events:auto; display: block; }
+    #ce-panel { position:fixed; top:5vh; left:50%; transform:translateX(-50%); width:480px; max-width:92vw; height:auto; max-height:90vh; border-radius:12px; z-index:2147483641; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6); font-family:-apple-system,sans-serif; font-size:13px; opacity:0; pointer-events:none; transition:opacity .2s ease; display: none; }
+    #ce-panel.open { opacity:1; pointer-events:auto; display: flex; }
+    #ce-search-panel { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:440px; max-width:92vw; height:60vh; max-height:800px; border-radius:12px; z-index:2147483646; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6); font-family:-apple-system,sans-serif; opacity:0; pointer-events:none; transition:opacity .2s ease; display: none; box-sizing: border-box; }
+    #ce-search-panel.open { opacity:1; pointer-events:auto; display: flex; }
+    @media (max-width:768px) { .ce-style-cards { display:grid !important; grid-template-columns:1fr 1fr !important; } .ce-color-row { flex-wrap:wrap !important; } #ce-search-panel { width: 90vw !important; max-width: 90vw !important; height: 75vh !important; } .ce-search-input { width: 100%; box-sizing: border-box; } }
+    #ce-panel.theme-light, #ce-search-panel.theme-light { background:#ffffff; color:#000000; border:1px solid #cccccc; }
+    #ce-panel.theme-light .ce-header, #ce-search-panel.theme-light .ce-search-header { background:#ffffff; border-bottom:1px solid #eeeeee; }
+    #ce-panel.theme-light .ce-btn-primary { background:#000000; color:#ffffff; }
+    #ce-panel.theme-light .ce-btn-primary:hover { background:#333333; }
+    #ce-panel.theme-light .ce-style-card.active { border-color:#000000; background:#f9f9f9; }
+    #ce-panel.theme-dark, #ce-search-panel.theme-dark { background:#000000; color:#ffffff; border:1px solid #333333; }
+    #ce-panel.theme-dark .ce-header, #ce-search-panel.theme-dark .ce-search-header { background:#000000; border-bottom:1px solid #333333; }
+    #ce-panel.theme-dark .ce-btn-primary { background:#ffffff; color:#000000; }
+    #ce-panel.theme-dark .ce-btn-primary:hover { background:#cccccc; }
+    #ce-panel.theme-dark .ce-style-card.active { border-color:#ffffff; background:#111111; }
+    .ce-header, .ce-search-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; font-weight:bold; }
+    .ce-theme-btn { padding:6px 12px; border-radius:4px; cursor:pointer; }
+    .ce-close, .ce-search-close { cursor:pointer; font-size:22px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; }
+    .ce-body, .ce-search-body { padding:16px 20px; overflow-y:auto; flex:1; }
+    .ce-section { margin-bottom:18px; padding:14px; border-radius:8px; border:1px solid var(--SmartThemeBorderColor, #ccc); }
+    .ce-btn { padding:10px 16px; border-radius:6px; cursor:pointer; font-weight:bold; text-align:center; }
+    .ce-input, .ce-number-input, .ce-search-input, .ce-hex-input { padding:8px; border-radius:6px; outline:none; border:1px solid var(--SmartThemeBorderColor, #ccc); background:transparent; color:inherit; }
+    .ce-style-cards { display:flex; gap:10px; flex-wrap:wrap; }
+    .ce-style-card { flex:1; min-width:85px; padding:12px 8px; border-radius:8px; text-align:center; cursor:pointer; border:2px solid transparent; }
+    .ce-style-preview { height:42px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:bold; margin-bottom:8px; border:1px solid #ccc; }
+    .ce-color-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; }
+    .ce-grid-swatch { aspect-ratio:1; border-radius:4px; cursor:pointer; border:1px solid #888; }
+    .ce-checkbox { appearance:none; position:absolute!important; left:10px!important; top:12px!important; width:24px!important; height:24px!important; border-radius:50%!important; border:2px solid #888!important; cursor:pointer!important; z-index:2147483635!important; transition:all .2s; }
+    .ce-checkbox:checked { background:#000!important; border-color:#000!important; }
+    .ce-checkbox:checked::after { content:''; position:absolute; left:7px; top:3px; width:6px; height:11px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+    #ce-confirm-select-btn { position:fixed!important; bottom:120px!important; left:50%!important; transform:translateX(-50%)!important; padding:16px 40px!important; border-radius:30px!important; font-size:16px!important; font-weight:bold!important; cursor:pointer!important; z-index:2147483647!important; box-shadow:0 8px 24px rgba(0,0,0,0.5)!important; background:#000!important; color:#fff!important; }
+    #ce-render-container { position:absolute; top:-99999px; left:-99999px; }
+    .ce-export-default { padding:28px; line-height:1.9; font-size:15px; font-family:-apple-system,sans-serif; }
+    .ce-export-default .ce-msg { margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid rgba(128,128,128,.3); }
+    .ce-export-default .ce-msg-name { font-weight:bold; margin-bottom:6px; font-size:14px; }
+    .ce-export-white-card { padding:24px; background:#f0f2f5; line-height:1.85; font-size:15px; color:#333; }
+    .ce-export-white-card .ce-msg { background:#fff; border-radius:12px; padding:18px 22px; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    .ce-export-dark-minimal { padding:28px; background:#1a1a2e; line-height:1.85; font-size:15px; color:#e2e2e2; }
+    .ce-export-dark-minimal .ce-msg { padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,.1); }
+    .ce-export-warm-note { padding:30px 34px; background:#faf6ee; line-height:2; font-size:15px; color:#4a3f2f; }
+    .ce-export-warm-note .ce-msg { padding-left:16px; margin-bottom:18px; border-left:3px solid #c9a96e; }
+    `;
+    document.head.appendChild(el);
+}
+
+function createPanel() {
+    const html = `
+    <div id="ce-overlay"></div>
+    <div id="ce-panel" class="theme-light">
+        <div class="ce-header">
+            <span>聊天记录导出器</span>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="ce-theme-btn" id="ce-theme-btn">切换夜间</div>
+                <div class="ce-close" id="ce-close-btn">X</div>
+            </div>
+        </div>
+        <div class="ce-body">
+            <div class="ce-section" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="font-weight:bold;">快速导航</span>
+                <button class="ce-btn" id="ce-scroll-top-btn" style="padding:8px 12px;">回顶</button>
+                <button class="ce-btn" id="ce-scroll-bottom-btn" style="padding:8px 12px;">回底</button>
+                <div style="width:1px;height:20px;background:#ccc;margin:0 4px;"></div>
+                <input type="number" class="ce-number-input" id="ce-jump-input" placeholder="楼层" min="1" style="width:60px;">
+                <button class="ce-btn" id="ce-jump-btn" style="padding:8px 12px;">跳转</button>
+                <div style="flex:1"></div>
+                <button class="ce-btn ce-btn-primary" id="ce-open-search-btn" style="padding:8px 14px;">搜索消息</button>
+            </div>
+            <div class="ce-section">
+                <div class="ce-section-title">消息隐藏与显示系统</div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                    <span>区间</span>
+                    <input type="number" class="ce-number-input" id="ce-vis-start" placeholder="起始层" style="width:75px;">
+                    <span>至</span>
+                    <input type="number" class="ce-number-input" id="ce-vis-end" placeholder="结束层" style="width:75px;">
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="ce-btn" id="ce-hide-btn" style="flex:1;background:#e53935;color:#fff;border:none;">隐藏选中层</button>
+                    <button class="ce-btn" id="ce-unhide-btn" style="flex:1;background:#43a047;color:#fff;border:none;">显示选中层</button>
+                </div>
+            </div>
+            <div class="ce-section">
+                <div class="ce-section-title">导出选择</div>
+                <div style="display:flex; gap:14px; margin-bottom:12px;">
+                    <label><input type="radio" name="ce-sel-method" value="manual" checked> 手动</label>
+                    <label><input type="radio" name="ce-sel-method" value="range"> 范围</label>
+                    <label><input type="radio" name="ce-sel-method" value="all"> 全部</label>
+                </div>
+                <div id="ce-manual-area">
+                    <button class="ce-btn" id="ce-sel-btn">开启多选模式</button>
+                    <span id="ce-sel-info" style="margin-left:10px;">已选 0 条</span>
+                </div>
+                <div id="ce-range-area" style="display:none;">
+                    起始: <input type="number" class="ce-number-input" id="ce-floor-start" min="1" style="width:60px; margin-right:10px;">
+                    结束: <input type="number" class="ce-number-input" id="ce-floor-end" min="1" style="width:60px;">
+                </div>
+            </div>
+            <div class="ce-section">
+                <div class="ce-section-title">标签过滤</div>
+                <input type="text" class="ce-input" id="ce-tags-input" placeholder="标签名，如 thinking（留空不过滤）" style="width:100%;">
+                <div style="display:flex; gap:14px; margin-top:10px;">
+                    <label><input type="radio" name="ce-filter" value="0" checked> 不过滤</label>
+                    <label><input type="radio" name="ce-filter" value="1"> 删标签</label>
+                    <label><input type="radio" name="ce-filter" value="2"> 仅保留</label>
+                </div>
+            </div>
+            <div class="ce-section">
+                <div class="ce-section-title">格式与排版</div>
+                <div style="display:flex; gap:14px; margin-bottom:12px;">
+                    <label><input type="radio" name="ce-format" value="txt"> TXT</label>
+                    <label><input type="radio" name="ce-format" value="img" checked> 图片</label>
+                </div>
+                <div id="ce-layout-group" style="display:flex; gap:14px; margin-bottom:12px;">
+                    <label><input type="radio" name="ce-layout" value="pc" checked> 电脑版</label>
+                    <label><input type="radio" name="ce-layout" value="mobile"> 手机版</label>
+                </div>
+                <div id="ce-compress-group" style="display:flex; gap:14px;">
+                    <label><input type="radio" name="ce-compress" value="1.0" checked> 原画质</label>
+                    <label><input type="radio" name="ce-compress" value="0.8"> 压缩</label>
+                </div>
+            </div>
+            <div class="ce-section" id="ce-style-section">
+                <div class="ce-section-title">导出样式</div>
+                <div class="ce-style-cards">
+                    <div class="ce-style-card active" data-style="default"><div class="ce-style-preview" style="background:#ffffff;color:#000">Aa</div>默认</div>
+                    <div class="ce-style-card" data-style="white-card"><div class="ce-style-preview" style="background:#f0f2f5;color:#333"><div style="background:#fff;padding:2px;border-radius:4px;">Aa</div></div>简约白卡</div>
+                    <div class="ce-style-card" data-style="dark-minimal"><div class="ce-style-preview" style="background:#1a1a2e;color:#e2e2e2">Aa</div>深色极简</div>
+                    <div class="ce-style-card" data-style="warm-note"><div class="ce-style-preview" style="background:#faf6ee;color:#4a3f2f;border-left:3px solid #c9a96e;">Aa</div>暖色便签</div>
+                </div>
+            </div>
+            <div class="ce-section" id="ce-color-section">
+                <div class="ce-section-title">默认颜色调节</div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    背景 <input type="text" class="ce-hex-input" id="ce-bg-hex" value="#ffffff">
+                    字色 <input type="text" class="ce-hex-input" id="ce-text-hex" value="#000000">
+                </div>
+                <div class="ce-color-grid" id="ce-color-grid" style="margin-top:10px;"></div>
+            </div>
+        </div>
+        <div style="padding:16px;">
+            <button class="ce-btn ce-btn-primary" id="ce-export-btn" style="width:100%;padding:14px;font-size:16px;">确 认 导 出</button>
+        </div>
+    </div>
+    <div id="ce-search-overlay"></div>
+    <div id="ce-search-panel" class="theme-light">
+        <div class="ce-search-header">
+            <input type="text" class="ce-search-input" id="ce-search-input" placeholder="输入关键字搜索...">
+            <span id="ce-search-count" style="margin-left:10px;">0 条匹配</span>
+            <div class="ce-search-close" id="ce-search-close" style="margin-left:auto;">×</div>
+        </div>
+        <div class="ce-search-body" id="ce-search-results"></div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+    setupPanelEvents();
+    setupSearchPanelEvents();
+}
+
+function setupPanelEvents() {
+    document.getElementById('ce-theme-btn').addEventListener('click', function () {
+        const p = document.getElementById('ce-panel'), s = document.getElementById('ce-search-panel');
+        if (state.theme === 'light') { state.theme = 'dark'; p.className='theme-dark'; s.className='theme-dark'; this.textContent='切换日间'; }
+        else { state.theme = 'light'; p.className='theme-light'; s.className='theme-light'; this.textContent='切换夜间'; }
+    });
+
+    document.getElementById('ce-close-btn').addEventListener('click', closePanel);
+    document.getElementById('ce-overlay').addEventListener('click', closePanel);
+
+    document.getElementById('ce-jump-btn').addEventListener('click', function () {
+        const floor = parseInt(document.getElementById('ce-jump-input').value);
+        const allMes = document.querySelectorAll('#chat .mes');
+        if (floor && floor >= 1 && floor <= allMes.length) { allMes[floor - 1].scrollIntoView({ behavior: 'smooth', block: 'center' }); closePanel(); }
+    });
+
+    document.getElementById('ce-scroll-top-btn').addEventListener('click', () => { document.querySelectorAll('#chat .mes')[0]?.scrollIntoView(); closePanel(); });
+    document.getElementById('ce-scroll-bottom-btn').addEventListener('click', () => { const m = document.querySelectorAll('#chat .mes'); m[m.length-1]?.scrollIntoView(); closePanel(); });
+
+    const execCmd = async (action) => {
+        const s = document.getElementById('ce-vis-start').value, e = document.getElementById('ce-vis-end').value;
+        if(s && e) await executeSlashCommands('/' + action + ' ' + s + '-' + e);
+        closePanel();
+    };
+    document.getElementById('ce-hide-btn').addEventListener('click', () => execCmd('hide'));
+    document.getElementById('ce-unhide-btn').addEventListener('click', () => execCmd('unhide'));
+
+    document.querySelectorAll('input[name="ce-sel-method"]').forEach(r => {
+        r.addEventListener('change', function () {
+            state.selectMethod = this.value;
+            document.getElementById('ce-manual-area').style.display = this.value === 'manual' ? '' : 'none';
+            document.getElementById('ce-range-area').style.display = this.value === 'range' ? '' : 'none';
+        });
+    });
+
+    document.getElementById('ce-sel-btn').addEventListener('click', () => { state.selectedMesIds.clear(); enterSelectionMode(); });
+
+    document.querySelectorAll('input[name="ce-format"]').forEach(r => {
+        r.addEventListener('change', function () {
+            state.format = this.value;
+            const isImg = this.value === 'img';
+            document.getElementById('ce-style-section').style.display = isImg ? '' : 'none';
+            document.getElementById('ce-layout-group').style.display = isImg ? 'flex' : 'none';
+            document.getElementById('ce-compress-group').style.display = isImg ? 'flex' : 'none';
+            document.getElementById('ce-color-section').style.display = (isImg && state.style === 'default') ? '' : 'none';
+        });
+    });
+
+    document.querySelectorAll('input[name="ce-layout"]').forEach(r => r.addEventListener('change', function () { state.exportLayout = this.value; }));
+    document.querySelectorAll('input[name="ce-compress"]').forEach(r => r.addEventListener('change', function () { state.compressLevel = this.value; }));
+
+    document.querySelectorAll('.ce-style-card').forEach(card => {
+        card.addEventListener('click', function () {
+            document.querySelectorAll('.ce-style-card').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            state.style = this.dataset.style;
+            document.getElementById('ce-color-section').style.display = (state.format === 'img' && state.style === 'default') ? '' : 'none';
+        });
+    });
+
+    const grid = document.getElementById('ce-color-grid');
+    PRESET_COLORS.slice(0, 32).forEach(color => {
+        const swatch = document.createElement('div');
+        swatch.className = 'ce-grid-swatch';
+        swatch.style.background = color;
+        swatch.addEventListener('click', () => {
+            state.bgColor = color;
+            document.getElementById('ce-bg-hex').value = color;
+        });
+        grid.appendChild(swatch);
+    });
+
+    document.getElementById('ce-bg-hex').addEventListener('change', function() { if(/^#[0-9a-fA-F]{6}$/.test(this.value)) state.bgColor = this.value; });
+    document.getElementById('ce-text-hex').addEventListener('change', function() { if(/^#[0-9a-fA-F]{6}$/.test(this.value)) state.textColor = this.value; });
+
+    document.getElementById('ce-export-btn').addEventListener('click', doExport);
+}
+
+function setupSearchPanelEvents() {
+    document.getElementById('ce-open-search-btn').addEventListener('click', function () {
+        document.getElementById('ce-search-overlay').classList.add('open');
+        document.getElementById('ce-search-panel').classList.add('open');
+        document.getElementById('ce-search-input').focus();
+    });
+    const closeSearch = () => { document.getElementById('ce-search-overlay').classList.remove('open'); document.getElementById('ce-search-panel').classList.remove('open'); };
+    document.getElementById('ce-search-close').addEventListener('click', closeSearch);
+
+    document.getElementById('ce-search-input').addEventListener('input', function () {
+        const keyword = this.value.trim().toLowerCase();
+        const results = document.getElementById('ce-search-results');
+        results.innerHTML = '';
+        let count = 0;
+        if (!keyword) { document.getElementById('ce-search-count').textContent = '0 条匹配'; return; }
+
+        document.querySelectorAll('#chat .mes').forEach((mes, idx) => {
+            const text = mes.querySelector('.mes_text')?.innerText || '';
+            const nameEl = mes.querySelector('.ch_name');
+            const name = nameEl ? nameEl.innerText : 'User';
+            if (name.toLowerCase().includes(keyword) || text.toLowerCase().includes(keyword)) {
+                count++;
+                const item = document.createElement('div');
+                item.className = 'ce-section';
+                item.style.cursor = 'pointer';
+                item.innerHTML = `<div style="font-weight:bold;margin-bottom:5px;">层 ${idx+1} | ${name}</div><div>${text}</div>`;
+                item.addEventListener('click', () => { mes.scrollIntoView(); closeSearch(); closePanel(); });
+                results.appendChild(item);
+            }
+        });
+        document.getElementById('ce-search-count').textContent = count + ' 条匹配';
+    });
+}
+
+function openPanel() { document.getElementById('ce-overlay').classList.add('open'); document.getElementById('ce-panel').classList.add('open'); }
+function closePanel() { document.getElementById('ce-overlay').classList.remove('open'); document.getElementById('ce-panel').classList.remove('open'); }
+
+function enterSelectionMode() {
+    closePanel();
+    document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
+    document.querySelectorAll('#chat .mes').forEach(mes => {
+        const mesId = mes.getAttribute('mesid');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'ce-checkbox';
+        cb.checked = state.selectedMesIds.has(mesId);
+        cb.addEventListener('click', e => e.stopPropagation());
+        cb.addEventListener('change', function () { this.checked ? state.selectedMesIds.add(mesId) : state.selectedMesIds.delete(mesId); });
+        mes.style.position = 'relative';
+        mes.insertBefore(cb, mes.firstChild);
+    });
+
+    if (!document.getElementById('ce-confirm-select-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'ce-confirm-select-btn';
+        btn.textContent = '完成选择';
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.ce-checkbox').forEach(cb => cb.remove());
+            btn.style.display = 'none';
+            document.getElementById('ce-sel-info').textContent = '已选 ' + state.selectedMesIds.size + ' 条';
+            openPanel();
+        });
+        document.body.appendChild(btn);
+    } else { document.getElementById('ce-confirm-select-btn').style.display = ''; }
+}
+
+function collectMessages() {
+    const raw = [];
+    const processMes = (mes) => {
+        const textEl = mes.querySelector('.mes_text');
+        if (!textEl) return;
+        const nameEl = mes.querySelector('.ch_name');
+        raw.push({ name: nameEl ? nameEl.innerText : 'User', rawText: textEl.innerText, html: textEl.innerHTML });
+    };
+
+    if (state.selectMethod === 'manual') {
+        state.selectedMesIds.forEach(id => {
+            const mes = document.querySelector('.mes[mesid="' + id + '"]');
+            if (mes) processMes(mes);
+        });
+    } else if (state.selectMethod === 'all') {
+        document.querySelectorAll('#chat .mes').forEach(processMes);
+    } else {
+        const s = parseInt(document.getElementById('ce-floor-start').value) || 1;
+        const e = parseInt(document.getElementById('ce-floor-end').value) || 999999;
+        document.querySelectorAll('#chat .mes').forEach((mes, idx) => { if (idx+1 >= s && idx+1 <= e) processMes(mes); });
+    }
+
+    const tagsInput = document.getElementById('ce-tags-input').value.trim();
+    const filterMode = document.querySelector('input[name="ce-filter"]:checked').value;
+    const tags = tagsInput.split(',').filter(Boolean);
+    const filtered = [];
+
+    raw.forEach(msg => {
+        let text = msg.rawText;
+        if (tags.length && filterMode !== '0') {
+            tags.forEach(t => {
+                const re = new RegExp('<\\s*'+t+'[^>]*>([\\s\\S]*?)<\\/\\s*'+t+'\\s*>', 'gi');
+                if (filterMode === '1') text = text.replace(re, '');
+                else if (filterMode === '2') {
+                    let kept = [];
+                    let m; while ((m = re.exec(msg.rawText))) kept.push(m[1]);
+                    text = kept.join('\\n\\n');
+                }
+            });
+        }
+        if (text.trim()) filtered.push({ name: msg.name, text: text, html: text.replace(/\\n/g, '<br>') });
+    });
+    return filtered;
+}
+
+async function doExport() {
+    const msgs = collectMessages();
+    if (!msgs.length) return alert('没有可导出的消息');
+
+    if (state.format === 'txt') {
+        let c = msgs.map(m => m.name + ':\\n' + m.text).join('\\n\\n');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([c], { type: 'text/plain' }));
+        a.download = 'export.txt';
+        a.click();
+    } else {
+        await loadHtml2Canvas();
+        const container = document.createElement('div');
+        container.id = 'ce-render-container';
+        container.style.width = state.exportLayout === 'mobile' ? '450px' : '800px';
+
+        let cName = 'ce-export-default';
+        if(state.style === 'white-card') cName = 'ce-export-white-card';
+        if(state.style === 'dark-minimal') cName = 'ce-export-dark-minimal';
+        if(state.style === 'warm-note') cName = 'ce-export-warm-note';
+
+        container.className = cName;
+        if(state.style === 'default') {
+            container.style.backgroundColor = state.bgColor;
+            container.style.color = state.textColor;
+        }
+
+        msgs.forEach(m => {
+            const d = document.createElement('div');
+            d.className = 'ce-msg';
+            d.innerHTML = '<div class="ce-msg-name">' + m.name + '</div><div>' + m.html + '</div>';
+            container.appendChild(d);
+        });
+        document.body.appendChild(container);
+
+        try {
+            const canvas = await html2canvas(container, { backgroundColor: null, scale: 2 });
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL(state.compressLevel === '1.0' ? 'image/png' : 'image/jpeg', parseFloat(state.compressLevel));
+            a.download = 'export.png';
+            a.click();
+        } catch(e) { alert('生成失败: ' + e.message); }
+        container.remove();
+    }
+}
+
+function createMenuButton() {
+    const inject = () => {
+        // 定位点1：顶部导航栏的扩展拼图菜单
+        const topMenu = document.getElementById('extensionsMenu');
+        if (topMenu && !document.getElementById('ce-ext-top-item')) {
+            const item = document.createElement('div');
+            item.id = 'ce-ext-top-item';
+            item.className = 'list-group-item flex-container flexGap5';
+            item.style.cursor = 'pointer';
+            item.innerHTML = '<div class="fa-solid fa-file-export extensionsMenuExtensionButton"></div><span>聊天导出面板</span>';
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openPanel();
+                // 自动关闭下拉菜单
+                const menuBtn = document.getElementById('extensionsMenuButton');
+                if (menuBtn) menuBtn.click();
+            });
+            topMenu.prepend(item);
+        }
+
+        // 定位点2：右侧面板内的扩展设置页 (魔棒面板)
+        const rightPanel = document.getElementById('rm_extensions_block') || document.getElementById('extensions_settings');
+        if (rightPanel && !document.getElementById('ce-ext-right-item')) {
+            const item = document.createElement('div');
+            item.id = 'ce-ext-right-item';
+            item.className = 'inline-drawer';
+            item.style.cursor = 'pointer';
+            item.style.padding = '12px';
+            item.style.marginTop = '10px';
+            item.style.marginBottom = '10px';
+            item.style.border = '1px solid var(--SmartThemeBorderColor, #555)';
+            item.style.borderRadius = '8px';
+            item.style.background = 'var(--SmartThemeBlurTintColor, rgba(0,0,0,0.1))';
+            item.innerHTML = '<div style="display:flex; align-items:center; gap:10px; font-weight:bold; font-size:14px;"><div class="fa-solid fa-file-export" style="font-size:18px;"></div><span>打开聊天导出面板</span></div>';
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openPanel();
+            });
+            rightPanel.prepend(item);
+        }
+    };
+
+    // 无论酒馆界面怎么切换和刷新，每2秒钟检测并强行渲染一次，确保绝对能找到入口！
+    setInterval(inject, 2000);
+}
+
+// 启动入口
+jQuery(async function () {
+    injectStyles();
+    createPanel();
+    createMenuButton();
+});
