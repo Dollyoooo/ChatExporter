@@ -1,7 +1,7 @@
 import { getContext } from '../../../extensions.js';
 
 // ================================================================
-//  Chat Exporter v2.8 — 聊天记录导出器 (公开强化版)
+//  Chat Exporter v2.8 — 聊天记录导出器
 // ================================================================
 
 const state = {
@@ -100,21 +100,32 @@ function injectStyles() {
 
 /* ===== 搜索弹窗 ===== */
 #ce-search-panel {
-    position:fixed; top:10vh; left:50%;
+    position:fixed; top:8vh; left:50%;
     transform:translateX(-50%);
-    width:440px; max-width:92vw; height:auto; max-height:80vh;
+    width:90vw; max-width:550px; height:80vh; /* 强制高度开启内部滚动 */
     border-radius:12px;
     z-index:2147483646; display:flex; flex-direction:column;
     overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.6);
     font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;
     opacity:0; pointer-events:none;
     transition:opacity .2s ease;
-    display: none; /* 修复：默认彻底隐藏，避免干扰SillyTavern加载 */
+    display: none;
 }
 #ce-search-panel.open {
     opacity:1; pointer-events:auto;
-    display: flex; /* 修复：打开时显示 */
+    display: flex;
 }
+.ce-search-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; flex-shrink:0; gap:10px; }
+.ce-search-input { flex:1; padding:8px 12px; border-radius:6px; outline:none; font-size:14px; border:1px solid transparent; }
+.ce-search-count { font-size:12px; white-space:nowrap; }
+.ce-search-close { font-size:24px; cursor:pointer; padding:0 5px; line-height:1; }
+.ce-search-body { flex:1; overflow-y:auto; padding:12px 16px; -webkit-overflow-scrolling:touch; }
+.ce-search-body::-webkit-scrollbar { width:6px; }
+.ce-search-body::-webkit-scrollbar-thumb { background:#888; border-radius:3px; }
+.ce-search-item { padding:12px; margin-bottom:12px; border-radius:8px; cursor:pointer; transition:background .2s; }
+.ce-search-item-header { font-size:12px; font-weight:bold; margin-bottom:6px; }
+.ce-search-item-text { font-size:13px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.ce-search-highlight { color:#ff4d4f; font-weight:bold; background:rgba(255,77,79,0.1); border-radius:2px; padding:0 2px; }
 
 /* ===== 手机/平板适配 ===== */
 @media (max-width:768px) {
@@ -242,15 +253,24 @@ function injectStyles() {
 .ce-checkbox.theme-light:checked::after { border-color:#ffffff; }
 .ce-checkbox.theme-dark:checked::after { border-color:#000000; }
 
-/* ===== 完成选择按钮 (绝对保证可见, 高度上调防遮挡) ===== */
+/* ===== 完成选择按钮 (移动端完美适配防遮挡) ===== */
 #ce-confirm-select-btn {
-    position:fixed !important; bottom:120px !important; left:50% !important;
+    position:fixed !important; bottom:60px !important; left:50% !important;
     transform:translateX(-50%) !important;
     padding:16px 40px !important; border-radius:30px !important;
     font-size:16px !important; font-weight:bold !important; cursor:pointer !important;
-    z-index:2147483647 !important; /* 最高层级 */
+    z-index:2147483647 !important;
     box-shadow:0 8px 24px rgba(0,0,0,0.5) !important;
+    width:max-content !important;
 }
+@media (max-width:768px) {
+    #ce-confirm-select-btn {
+        bottom:15vh !important; /* 手机端改为百分比高度，躲避输入法和工具栏 */
+        width:80% !important;
+        text-align:center !important;
+    }
+}
+
 #ce-confirm-select-btn.theme-light { background:#000000 !important; color:#ffffff !important; border:1px solid #000000 !important; }
 #ce-confirm-select-btn.theme-dark { background:#ffffff !important; color:#000000 !important; border:1px solid #ffffff !important; }
 
@@ -519,20 +539,24 @@ function setupPanelEvents() {
         const start = parseInt(document.getElementById('ce-hide-start').value);
         const end = parseInt(document.getElementById('ce-hide-end').value);
         if (!start || !end || start > end) return alert('请输入有效的楼层范围');
-        const allMes = document.querySelectorAll('#chat .mes');
-        allMes.forEach((mes, idx) => {
-            if (idx + 1 >= start && idx + 1 <= end) mes.style.display = 'none';
-        });
+        if (window.SlashCommandParser && window.SlashCommandParser.execute) {
+            window.SlashCommandParser.execute('/hide ' + start + '-' + end);
+            closePanel();
+        } else {
+            alert('调用失败，当前酒馆版本不支持此原生指令。');
+        }
     });
 
     document.getElementById('ce-show-btn').addEventListener('click', function () {
         const start = parseInt(document.getElementById('ce-hide-start').value);
         const end = parseInt(document.getElementById('ce-hide-end').value);
         if (!start || !end || start > end) return alert('请输入有效的楼层范围');
-        const allMes = document.querySelectorAll('#chat .mes');
-        allMes.forEach((mes, idx) => {
-            if (idx + 1 >= start && idx + 1 <= end) mes.style.display = '';
-        });
+        if (window.SlashCommandParser && window.SlashCommandParser.execute) {
+            window.SlashCommandParser.execute('/unhide ' + start + '-' + end);
+            closePanel();
+        } else {
+            alert('调用失败，当前酒馆版本不支持此原生指令。');
+        }
     });
 
     document.querySelectorAll('input[name="ce-sel-method"]').forEach(r => {
@@ -669,6 +693,10 @@ function setupSearchPanelEvents() {
     document.getElementById('ce-search-close').addEventListener('click', closeSearch);
     searchOverlay.addEventListener('click', closeSearch);
 
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     // 实时搜索逻辑
     searchInput.addEventListener('input', function () {
         const keyword = this.value.trim().toLowerCase();
@@ -684,13 +712,12 @@ function setupSearchPanelEvents() {
 
         allMes.forEach((mes, idx) => {
             const textEl = mes.querySelector('.mes_text');
-            if (!textEl) return; // 只要有聊天内容，就绝对不跳过！
+            if (!textEl) return;
 
-            // 修复：优先从酒馆底层数据获取名字，没有DOM元素也不怕漏掉用户消息
             let name = "User";
             const context = typeof getContext === 'function' ? getContext() : null;
             const chatArray = context ? context.chat : [];
-            const mesId = mes.getAttribute('mesid'); // 从mes元素获取mesid
+            const mesId = mes.getAttribute('mesid');
             if (chatArray && chatArray[mesId] && chatArray[mesId].name) {
                 name = chatArray[mesId].name;
             } else {
@@ -698,30 +725,49 @@ function setupSearchPanelEvents() {
                 name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
             }
 
-            const text = textEl.innerText; // 获取纯文本，去掉HTML标签
+            // 精准提取段落 (优先匹配 p 或 div 子元素，若无则整段提取)
+            const paragraphs = Array.from(textEl.querySelectorAll('p, div')).filter(el => el.textContent.trim() !== '');
+            const targets = paragraphs.length > 0 ? paragraphs : [textEl];
 
-            if (name.toLowerCase().includes(keyword) || text.toLowerCase().includes(keyword)) {
-                matchCount++;
-                const floor = idx + 1;
+            targets.forEach(target => {
+                const text = target.innerText || target.textContent;
+                if (name.toLowerCase().includes(keyword) || text.toLowerCase().includes(keyword)) {
+                    matchCount++;
+                    const floor = idx + 1;
 
-                const item = document.createElement('div');
-                item.className = 'ce-search-item';
-                item.innerHTML = `
-                    <div class="ce-search-item-header">
-                        <span>第 ${floor} 层 | ${name}</span>
-                    </div>
-                    <div class="ce-search-item-text">${text}</div>
-                `;
+                    // 安全提取并高亮关键字
+                    const safeText = text.replace(/</g, '<').replace(/>/g, '>');
+                    const regex = new RegExp('(' + escapeRegExp(keyword) + ')', 'gi');
+                    const highlightedText = safeText.replace(regex, '<span class="ce-search-highlight">$1</span>');
 
-                // 点击跳转
-                item.addEventListener('click', () => {
-                    mes.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    closeSearch();
-                    closePanel(); // 跳转后顺便把主面板也关掉，让宝宝专心看消息
-                });
+                    const item = document.createElement('div');
+                    item.className = 'ce-search-item';
+                    item.innerHTML = `
+                        <div class="ce-search-item-header">第 ${floor} 层 | ${name}</div>
+                        <div class="ce-search-item-text">${highlightedText}</div>
+                    `;
 
-                searchResults.appendChild(item);
-            }
+                    // 点击精准跳转到对应的段落
+                    item.addEventListener('click', () => {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // 添加目标段落黄色闪烁提示反馈
+                        const oldBg = target.style.backgroundColor;
+                        const oldTrans = target.style.transition;
+                        target.style.transition = 'background-color 0.3s';
+                        target.style.backgroundColor = 'rgba(255, 215, 0, 0.4)';
+                        setTimeout(() => {
+                            target.style.backgroundColor = oldBg;
+                            setTimeout(() => target.style.transition = oldTrans, 300);
+                        }, 1500);
+
+                        closeSearch();
+                        closePanel();
+                    });
+
+                    searchResults.appendChild(item);
+                }
+            });
         });
 
         searchCount.textContent = `${matchCount} 条匹配`;
