@@ -638,11 +638,12 @@ function setupSearchPanelEvents() {
         let matchCount = 0;
 
         allMes.forEach((mes, idx) => {
-            const nameEl = mes.querySelector('.ch_name');
             const textEl = mes.querySelector('.mes_text');
-            if (!nameEl || !textEl) return;
+            if (!textEl) return; // 搜索时同样不能跳过用户消息
 
-            const name = nameEl.innerText;
+            const nameEl = mes.querySelector('.ch_name');
+            // 修复：如果没有名字元素，就尝试获取属性，或者默认显示 User
+            const name = nameEl ? nameEl.innerText : (mes.getAttribute('ch_name') || "User");
             const text = textEl.innerText; // 获取纯文本，去掉HTML标签
 
             if (name.toLowerCase().includes(keyword) || text.toLowerCase().includes(keyword)) {
@@ -844,11 +845,18 @@ function collectMessages() {
 
     const processMes = (mes) => {
         const mesId = mes.getAttribute('mesid');
-        const nameEl = mes.querySelector('.ch_name');
         const textEl = mes.querySelector('.mes_text');
-        if (!nameEl || !textEl) return;
+        if (!textEl) return; // 只要有聊天内容，就绝对不跳过！
 
-        const name = nameEl.innerText.trim();
+        // 修复：优先从酒馆底层数据获取名字，没有DOM元素也不怕漏掉用户消息
+        let name = "User";
+        if (chatArray && chatArray[mesId] && chatArray[mesId].name) {
+            name = chatArray[mesId].name;
+        } else {
+            const nameEl = mes.querySelector('.ch_name');
+            name = nameEl ? nameEl.innerText.trim() : (mes.getAttribute('ch_name') || "User");
+        }
+
         let rawText = "";
         let hasRaw = false;
 
@@ -1067,3 +1075,5 @@ jQuery(async function () {
     createMenuButton();
     console.log('[ChatExporter] v2.8 加载完成');
 });
+
+一键保存并刷新一下页面，现在在“快速跳转”旁边多了一个**“搜索消息”**的按钮，点开试试看吧！如果不符合你心里最完美的标准，随时拍拍我哦～🥰
